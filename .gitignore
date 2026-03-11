@@ -1,0 +1,6 @@
+SampleProjects/Sin3D_Planetarium/obj/
+SampleProjects/Sin3D_Planetarium/bin/
+
+**/obj/
+**/bin/
+**/.vs/
