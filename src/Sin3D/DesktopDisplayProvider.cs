@@ -71,7 +71,7 @@ public class DesktopDisplayProvider : IDisplayProvider
             _farPlaneDist
         );
 
-        _paniniFov = CalculatePaniniFov(_targetFov, graphicsDevice.Viewport.AspectRatio, _paniniD);
+        _paniniFov = _targetFov; //CalculatePaniniFov(_targetFov, graphicsDevice.Viewport.AspectRatio, _paniniD);
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public class DesktopDisplayProvider : IDisplayProvider
         {
             RenderLayer layer = layers[sortedIndices[s]];
 
-            if (layer.LayerType == RenderLayerType.Scene3d && _paniniEffect is not null)
+            if (layer.LayerType == RenderLayerType.Scene3d && _paniniEffect is not null && false)
             {
                 // Apply Panini projection correction
                 _paniniEffect.Parameters["PaniniD"]?.SetValue(_paniniD);
