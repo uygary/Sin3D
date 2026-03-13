@@ -108,14 +108,29 @@ public class Camera3d
     /// <summary>
     /// Updates the camera's view matrix (to be used after changing position or rotation).
     /// </summary>
-    public void UpdateViewMatrix()
+    /// <param name="eyeOffset">Optional offset (e.g. for VR eyes) in local camera space.</param>
+    public void UpdateViewMatrix(Vector3 eyeOffset = default)
     {
         //getting cam target
         Matrix rotationMatrix = Matrix.CreateFromYawPitchRoll(_yaw, _pitch, _roll);
         Vector3 direction = Vector3.Transform(Vector3.Forward, rotationMatrix);
-        Vector3 target = direction + _position;
 
-        _viewMatrix = Matrix.CreateLookAt(_position, target, Vector3.Up);
+        // Apply rotation to the eye offset to get it in world space relative to camera orientation
+        Vector3 worldEyeOffset = Vector3.Transform(eyeOffset, rotationMatrix);
+        Vector3 shiftedPosition = _position + worldEyeOffset;
+
+        Vector3 target = direction + shiftedPosition;
+
+        _viewMatrix = Matrix.CreateLookAt(shiftedPosition, target, Vector3.Up);
+    }
+
+    /// <summary>
+    /// Sets the projection matrix directly.
+    /// </summary>
+    /// <param name="projection">The projection matrix to use.</param>
+    public void SetProjection(Matrix projection)
+    {
+        _projectionMatrix = projection;
     }
 
     /// <summary>

@@ -16,6 +16,21 @@ public interface IDisplayProvider
     int EyeCount { get; }
 
     /// <summary>
+    /// The target visual field of view in radians.
+    /// </summary>
+    float TargetFov { get; }
+
+    /// <summary>
+    /// The actual rendered field of view in radians (may be wider than TargetFov for Panini).
+    /// </summary>
+    float RenderedFov { get; }
+
+    /// <summary>
+    /// The Panini compression parameter (0.0 = rectilinear).
+    /// </summary>
+    float PaniniD { get; }
+
+    /// <summary>
     /// Gets the camera position offset for the given eye in world space.
     /// Returns <see cref="Vector3.Zero"/> for desktop (single eye).
     /// </summary>
@@ -29,6 +44,13 @@ public interface IDisplayProvider
     /// <param name="eyeIndex">The eye index (0 or 1).</param>
     /// <returns>The projection matrix.</returns>
     Matrix GetProjectionMatrix(int eyeIndex);
+
+    /// <summary>
+    /// Gets the desired resolution for render layers (e.g. half-width for VR eyes).
+    /// </summary>
+    /// <param name="graphicsDevice">The graphics device.</param>
+    /// <returns>The width and height for a render layer target.</returns>
+    Point GetLayerResolution(GraphicsDevice graphicsDevice);
 
     /// <summary>
     /// Initializes the display provider (loads shaders, creates resources, etc.).

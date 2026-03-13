@@ -24,11 +24,19 @@ public class DesktopDisplayProvider : IDisplayProvider
     /// <inheritdoc/>
     public int EyeCount => 1;
 
+    /// <inheritdoc/>
+    public float TargetFov => _targetFov;
+
+    /// <inheritdoc/>
+    public float RenderedFov => _paniniFov;
+
+    /// <inheritdoc/>
+    public float PaniniD => _paniniD;
+
     /// <summary>
     /// Creates a new <see cref="DesktopDisplayProvider"/>.
     /// </summary>
     /// <param name="targetFov">The field of view in radians.</param>
-    /// <param name="renderedFov">The wider field of view before a Panini projection is applied, in radians.</param>
     /// <param name="nearPlaneDist">The near plane render distance.</param>
     /// <param name="farPlaneDist">The far plane render distance.</param>
     /// <param name="paniniD">Panini compression strength (0.0 = rectilinear, 1.0 = full Panini).</param>
@@ -45,6 +53,13 @@ public class DesktopDisplayProvider : IDisplayProvider
 
     /// <inheritdoc/>
     public Matrix GetProjectionMatrix(int eyeIndex) => _projectionMatrix;
+
+    /// <inheritdoc/>
+    public Point GetLayerResolution(GraphicsDevice graphicsDevice)
+    {
+        // On Desktop, layers use the full window resolution.
+        return new Point(graphicsDevice.Viewport.Width, graphicsDevice.Viewport.Height);
+    }
 
     /// <inheritdoc/>
     public void Initialize(GraphicsDevice graphicsDevice)
