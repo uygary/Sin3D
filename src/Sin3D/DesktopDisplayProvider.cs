@@ -71,7 +71,7 @@ public class DesktopDisplayProvider : IDisplayProvider
             _farPlaneDist
         );
 
-        _paniniFov = _targetFov; //CalculatePaniniFov(_targetFov, graphicsDevice.Viewport.AspectRatio, _paniniD);
+        _paniniFov = CalculatePaniniFov(_targetFov, graphicsDevice.Viewport.AspectRatio, _paniniD);
     }
 
     /// <summary>
