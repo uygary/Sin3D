@@ -129,7 +129,7 @@ public class DesktopDisplayProvider : IDisplayProvider
         {
             RenderLayer layer = layers[sortedIndices[s]];
 
-            if (layer.LayerType == RenderLayerType.Scene3d && _paniniEffect is not null && false)
+            if (layer.LayerType == RenderLayerType.Scene3d && _paniniEffect is not null)
             {
                 // Apply Panini projection correction
                 _paniniEffect.Parameters["PaniniD"]?.SetValue(_paniniD);
