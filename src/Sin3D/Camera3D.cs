@@ -134,6 +134,15 @@ public class Camera3d
     }
 
     /// <summary>
+    /// Sets the view matrix directly (e.g. for VR head tracking).
+    /// </summary>
+    /// <param name="viewMatrix">The view matrix to use.</param>
+    public void SetViewMatrix(Matrix viewMatrix)
+    {
+        _viewMatrix = viewMatrix;
+    }
+
+    /// <summary>
     /// Updates the camera's projection matrix (to be used after changing fov or the near/far plane distance).
     /// </summary>
     /// <param name="graphicsDevice">The graphics device used in the creation of the projection matrix.</param>

@@ -10,6 +10,8 @@ namespace Sin3d;
 /// </summary>
 public interface IDisplayProvider
 {
+    bool IsVr { get; }
+
     /// <summary>
     /// The number of eyes to render (1 for desktop, 2 for VR).
     /// </summary>
@@ -57,7 +59,7 @@ public interface IDisplayProvider
     /// Must be called after the graphics device is ready.
     /// </summary>
     /// <param name="graphicsDevice">The graphics device.</param>
-    void Initialize(GraphicsDevice graphicsDevice);
+    bool Initialize(GraphicsDevice graphicsDevice);
 
     /// <summary>
     /// Composites the given render layers to the current render target (typically the backbuffer),
@@ -67,4 +69,28 @@ public interface IDisplayProvider
     /// <param name="spriteBatch">The sprite batch to use for drawing fullscreen quads.</param>
     /// <param name="layers">The render layers to composite, in any order (will be sorted by DrawOrder).</param>
     void CompositeLayers(SpriteBatch spriteBatch, IReadOnlyList<RenderLayer> layers);
+
+    /// <summary>
+    /// Called at the start of Draw to begin the VR frame, if applicable.
+    /// Returns false if the frame should be skipped (e.g. headset asleep).
+    /// Desktop providers return true by default.
+    /// </summary>
+    bool BeginFrame() => true;
+
+    /// <summary>
+    /// Called at the end of Draw to submit the VR frame, if applicable.
+    /// Desktop providers do nothing by default.
+    /// </summary>
+    void EndFrame() { }
+
+    /// <summary>
+    /// Gets the view matrix override for the given eye from the VR runtime.
+    /// Returns null if the provider does not override the view matrix (desktop mode).
+    /// </summary>
+    Matrix? GetViewMatrix(int eyeIndex) => null;
+
+    /// <summary>
+    /// Disposes of any resources held by the display provider.
+    /// </summary>
+    void Dispose() { }
 }

@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Sin3d;
@@ -8,8 +8,9 @@ namespace Sin3d;
 /// This implementation provides standard symmetric projection matrices with an IPD offset.
 /// In a real VR implementation (e.g. OpenXR), this would use asymmetric frustums provided by the VR runtime.
 /// </summary>
-public class VrDisplayProvider : IDisplayProvider
+public class StereoscopicDisplayProvider : IDisplayProvider
 {
+    public bool IsVr => true;
     private readonly float _fov;
     private readonly float _nearPlaneDist;
     private readonly float _farPlaneDist;
@@ -36,7 +37,7 @@ public class VrDisplayProvider : IDisplayProvider
     /// <param name="nearPlaneDist">The near plane render distance.</param>
     /// <param name="farPlaneDist">The far plane render distance.</param>
     /// <param name="ipd">Interpupillary distance in world units (e.g., 0.064 for 64mm if 1 unit = 1 meter).</param>
-    public VrDisplayProvider(float fov, float nearPlaneDist, float farPlaneDist, float ipd = 0.064f)
+    public StereoscopicDisplayProvider(float fov, float nearPlaneDist, float farPlaneDist, float ipd = 0.064f)
     {
         _fov = fov;
         _nearPlaneDist = nearPlaneDist;
@@ -64,7 +65,7 @@ public class VrDisplayProvider : IDisplayProvider
     }
 
     /// <inheritdoc/>
-    public void Initialize(GraphicsDevice graphicsDevice)
+    public bool Initialize(GraphicsDevice graphicsDevice)
     {
         // For a basic implementation, we use a single symmetric projection for both eyes.
         // In real VR, these would be asymmetric.
@@ -74,6 +75,8 @@ public class VrDisplayProvider : IDisplayProvider
             _nearPlaneDist,
             _farPlaneDist
         );
+
+        return true;
     }
 
     /// <inheritdoc/>
@@ -108,7 +111,7 @@ public class VrDisplayProvider : IDisplayProvider
         for (int s = 0; s < sortedIndices.Length; s++)
         {
             RenderLayer layer = layers[sortedIndices[s]];
-            
+
             // Draw the layer to the current viewport (expected to be set to the left or right half of the screen)
             spriteBatch.Draw(
                 layer.Target,

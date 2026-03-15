@@ -12,6 +12,7 @@ namespace Sin3d;
 /// </summary>
 public class DesktopDisplayProvider : IDisplayProvider
 {
+    public bool IsVr => false;
     private readonly float _targetFov;
     private readonly float _nearPlaneDist;
     private readonly float _farPlaneDist;
@@ -62,7 +63,7 @@ public class DesktopDisplayProvider : IDisplayProvider
     }
 
     /// <inheritdoc/>
-    public void Initialize(GraphicsDevice graphicsDevice)
+    public bool Initialize(GraphicsDevice graphicsDevice)
     {
         _projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
             _targetFov,
@@ -72,6 +73,8 @@ public class DesktopDisplayProvider : IDisplayProvider
         );
 
         _paniniFov = CalculatePaniniFov(_targetFov, graphicsDevice.Viewport.AspectRatio, _paniniD);
+
+        return true;
     }
 
     /// <summary>
@@ -94,7 +97,10 @@ public class DesktopDisplayProvider : IDisplayProvider
         float inner = (dPlus1 * dPlus1) - (paniniD * xEdge * xEdge);
 
         // Prevent math errors if Panini parameter is pushed too high
-        if (inner <= 0f) return targetFov;
+        if (inner <= 0f)
+        {
+            return targetFov;
+        }
 
         float xSource = (xEdge * dPlus1) / (float)Math.Sqrt(inner);
         float requiredVerticalHalfTan = xSource / aspectRatio;
