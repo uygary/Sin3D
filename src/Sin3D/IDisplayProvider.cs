@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Sin3d;
 
@@ -8,7 +9,7 @@ namespace Sin3d;
 /// Desktop providers apply projection correction (e.g. Panini) to 3D layers;
 /// VR providers submit per-eye render targets to the VR compositor.
 /// </summary>
-public interface IDisplayProvider
+public interface IDisplayProvider : IDisposable
 {
     bool IsVr { get; }
 
@@ -88,9 +89,4 @@ public interface IDisplayProvider
     /// Returns null if the provider does not override the view matrix (desktop mode).
     /// </summary>
     Matrix? GetViewMatrix(int eyeIndex) => null;
-
-    /// <summary>
-    /// Disposes of any resources held by the display provider.
-    /// </summary>
-    void Dispose() { }
 }

@@ -13,6 +13,7 @@ namespace Sin3d;
 public class DesktopDisplayProvider : IDisplayProvider
 {
     public bool IsVr => false;
+
     private readonly float _targetFov;
     private readonly float _nearPlaneDist;
     private readonly float _farPlaneDist;
@@ -176,5 +177,10 @@ public class DesktopDisplayProvider : IDisplayProvider
 
             spriteBatch.End();
         }
+    }
+
+    public void Dispose()
+    {
+        _paniniEffect?.Dispose();
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Sin3d;
@@ -121,5 +121,9 @@ public class StereoscopicDisplayProvider : IDisplayProvider
         }
 
         spriteBatch.End();
+    }
+
+    public void Dispose()
+    {
     }
 }
