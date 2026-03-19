@@ -42,7 +42,12 @@ public class Model3d
     /// <summary>
     /// The model's world matrix.
     /// </summary>
-    public Matrix WorldMatrix => _worldMatrix;
+    /// <remarks>
+    /// This should ideally be a readonly property that is only updated through the UpdateWorldMatrix method,
+    /// but we made it settable to handle virtual models in VR based on updates provided by OpenXR.
+    /// TODO: I think we need a better way of handling that.
+    /// </remarks>
+    public Matrix WorldMatrix { get => _worldMatrix; set => _worldMatrix = value; }
 
     private List<BoundingBox> _localAxisAlignedBoundingBoxes = new ();
     /// <summary>
@@ -92,9 +97,9 @@ public class Model3d
     public void UpdateWorldMatrix()
     {
         _worldMatrix = (
-            Matrix.CreateScale(_scale) *
-            Matrix.CreateFromQuaternion(_rotation) *
-            Matrix.CreateTranslation(_position)
+            Matrix.CreateScale(_scale)
+            * Matrix.CreateFromQuaternion(_rotation)
+            * Matrix.CreateTranslation(_position)
         );
     }
 
