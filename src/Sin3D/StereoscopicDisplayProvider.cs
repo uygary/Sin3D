@@ -11,6 +11,7 @@ namespace Sin3d;
 public class StereoscopicDisplayProvider : IDisplayProvider
 {
     public bool IsVr => true;
+    public bool IsFlat => true;
     private readonly float _fov;
     private readonly float _nearPlaneDist;
     private readonly float _farPlaneDist;

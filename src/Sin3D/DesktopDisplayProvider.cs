@@ -13,6 +13,7 @@ namespace Sin3d;
 public class DesktopDisplayProvider : IDisplayProvider
 {
     public bool IsVr => false;
+    public bool IsFlat => true;
 
     private readonly float _targetFov;
     private readonly float _nearPlaneDist;

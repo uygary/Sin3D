@@ -12,6 +12,7 @@ namespace Sin3d;
 public interface IDisplayProvider : IDisposable
 {
     bool IsVr { get; }
+    bool IsFlat { get; }
 
     /// <summary>
     /// The number of eyes to render (1 for desktop, 2 for VR).
