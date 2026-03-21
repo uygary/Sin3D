@@ -9,6 +9,7 @@ namespace Sin3d;
 public class Renderer3d
 {
     private readonly GraphicsDevice _graphicsDevice;
+    private readonly bool _useCrr;
 
     private float _effectAlpha;
     /// <summary>
@@ -80,9 +81,11 @@ public class Renderer3d
     /// Creates a new <see cref="Renderer3d"/> object.
     /// </summary>
     /// <param name="graphicsDevice">The graphics device that the renderer will target.</param>
-    public Renderer3d(GraphicsDevice graphicsDevice)
+    /// <param name="useCrr">Whether to use the camera-relative rendering projection matrix.</param>
+    public Renderer3d(GraphicsDevice graphicsDevice, bool useCrr)
     {
         _graphicsDevice = graphicsDevice;
+        _useCrr = useCrr;
         ResetRenderingSettings();
     }
 
@@ -135,9 +138,30 @@ public class Renderer3d
             ModelMesh mesh = model.BaseModel.Meshes[i];
             foreach (BasicEffect effect in mesh.Effects.Cast<BasicEffect>())
             {
-                //setting up the effect to draw the model
-                effect.World = model.WorldMatrix;
-                effect.View = camera.ViewMatrix;
+                // Setting up the effect to draw the model
+                
+                if (_useCrr)
+                {
+                    // Camera-relative rendering for VR jitter reduction:
+                    // Perform rendering relative to the camera position by adjust the world and view matrices.
+                    // This keeps World*View math near the origin, where float precision is highest.
+                    Matrix relativeWorld = model.WorldMatrix * Matrix.CreateTranslation(-camera.Position);
+                    Matrix relativeView = camera.ViewMatrix;
+
+                    // Clear the translation from the view matrix since we moved the world instead.
+                    // This prevents double-translation and ensures we stay at origin.
+                    relativeView.M41 = 0;
+                    relativeView.M42 = 0;
+                    relativeView.M43 = 0;
+
+                    effect.World = relativeWorld;
+                    effect.View = relativeView;
+                }
+                else
+                {
+                    effect.World = model.WorldMatrix;
+                    effect.View = camera.ViewMatrix;
+                }
                 effect.Projection = camera.ProjectionMatrix;
 
                 //handling effect texture
