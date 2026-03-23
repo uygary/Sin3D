@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Sin3d.Extensions;
 
 namespace Sin3d;
 
@@ -136,8 +137,9 @@ public class Renderer3d
         for (int i = 0; i < model.BaseModel.Meshes.Count; i++)
         {
             ModelMesh mesh = model.BaseModel.Meshes[i];
-            foreach (BasicEffect effect in mesh.Effects.Cast<BasicEffect>())
+            for (int j = 0; j < mesh.Effects.Count; j++)
             {
+                BasicEffect effect = (BasicEffect)mesh.Effects[j];
                 // Setting up the effect to draw the model
                 
                 if (_useCrr)
@@ -145,7 +147,10 @@ public class Renderer3d
                     // Camera-relative rendering for VR jitter reduction:
                     // Perform rendering relative to the camera position by adjust the world and view matrices.
                     // This keeps World*View math near the origin, where float precision is highest.
-                    Matrix relativeWorld = model.WorldMatrix * Matrix.CreateTranslation(-camera.Position);
+                    Vector3 translation = -camera.Position;
+                    Matrix.CreateTranslation(in translation, out Matrix translationMatrix);
+                    Matrix worldMatrix = model.WorldMatrix;
+                    Matrix.Multiply(in worldMatrix, in translationMatrix, out Matrix relativeWorld);
                     Matrix relativeView = camera.ViewMatrix;
 
                     // Clear the translation from the view matrix since we moved the world instead.

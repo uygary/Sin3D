@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Sin3d.Extensions;
 
 namespace Sin3d;
 
@@ -96,11 +97,11 @@ public class Model3d
     /// </summary>
     public void UpdateWorldMatrix()
     {
-        _worldMatrix = (
-            Matrix.CreateScale(_scale)
-            * Matrix.CreateFromQuaternion(_rotation)
-            * Matrix.CreateTranslation(_position)
-        );
+        Matrix.CreateScale(_scale, out Matrix scaleMatrix);
+        Matrix.CreateFromQuaternion(in _rotation, out Matrix rotationMatrix);
+        Matrix.Multiply(in scaleMatrix, in rotationMatrix, out Matrix srMatrix);
+        Matrix.CreateTranslation(in _position, out Matrix translationMatrix);
+        Matrix.Multiply(in srMatrix, in translationMatrix, out _worldMatrix);
     }
 
     /// <summary>
@@ -189,7 +190,7 @@ public class Model3d
         Vector3[] transformedBoxVertices = new Vector3[localBoxVertices.Length];
         for (int i = 0; i < localBoxVertices.Length; i++)
         {
-            transformedBoxVertices[i] = Vector3.Transform(localBoxVertices[i], transform);
+            Vector3.Transform(in localBoxVertices[i], in transform, out transformedBoxVertices[i]);
         }
 
         return BoundingBox.CreateFromPoints(transformedBoxVertices);
