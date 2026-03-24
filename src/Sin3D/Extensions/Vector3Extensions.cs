@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System.Runtime.CompilerServices;
 
 namespace Sin3d.Extensions;
 
@@ -14,6 +15,8 @@ public static class Vector3Extensions
         /// <param name="value1">The first vector to add.</param>
         /// <param name="value2">The second vector to add.</param>
         /// <param name="result">The result of the vector addition.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in Vector3SimdExtensions for better performance.")]
         public static void Add(in Vector3 value1, in Vector3 value2, out Vector3 result)
         {
             result.X = value1.X + value2.X;
@@ -25,6 +28,8 @@ public static class Vector3Extensions
         /// <param name="value1">The first vector.</param>
         /// <param name="value2">The second vector.</param>
         /// <param name="result">The distance between two vectors as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in Vector3SimdExtensions for better performance.")]
         public static void Distance(in Vector3 value1, in Vector3 value2, out float result)
         {
             Vector3.DistanceSquared(in value1, in value2, out result);
@@ -35,6 +40,8 @@ public static class Vector3Extensions
         /// <param name="value1">The first vector.</param>
         /// <param name="value2">The second vector.</param>
         /// <param name="result">The squared distance between two vectors as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in Vector3SimdExtensions for better performance.")]
         public static void DistanceSquared(in Vector3 value1, in Vector3 value2, out float result)
         {
             result = (float)(((double)value1.X - (double)value2.X) * ((double)value1.X - (double)value2.X) + ((double)value1.Y - (double)value2.Y) * ((double)value1.Y - (double)value2.Y) + ((double)value1.Z - (double)value2.Z) * ((double)value1.Z - (double)value2.Z));
@@ -46,6 +53,8 @@ public static class Vector3Extensions
         /// <param name="position">Source <see cref="T:Microsoft.Xna.Framework.Vector3" />.</param>
         /// <param name="matrix">The transformation <see cref="T:Microsoft.Xna.Framework.Matrix" />.</param>
         /// <param name="result">Transformed <see cref="T:Microsoft.Xna.Framework.Vector3" /> as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in Vector3SimdExtensions for better performance.")]
         public static void Transform(in Vector3 position, in Matrix matrix, out Vector3 result)
         {
             float num1 = (float)((double)position.X * (double)matrix.M11 + (double)position.Y * (double)matrix.M21 + (double)position.Z * (double)matrix.M31) + matrix.M41;
@@ -62,6 +71,8 @@ public static class Vector3Extensions
         /// <param name="value">Source <see cref="T:Microsoft.Xna.Framework.Vector3" />.</param>
         /// <param name="rotation">The <see cref="T:Microsoft.Xna.Framework.Quaternion" /> which contains rotation transformation.</param>
         /// <param name="result">Transformed <see cref="T:Microsoft.Xna.Framework.Vector3" /> as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in Vector3SimdExtensions for better performance.")]
         public static void Transform(in Vector3 value, in Quaternion rotation, out Vector3 result)
         {
             float num1 = (float)(2.0 * ((double)rotation.Y * (double)value.Z - (double)rotation.Z * (double)value.Y));

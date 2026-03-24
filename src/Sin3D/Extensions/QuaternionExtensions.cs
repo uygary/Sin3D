@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System.Runtime.CompilerServices;
 
 namespace Sin3d.Extensions;
 
@@ -14,6 +15,8 @@ public static class QuaternionExtensions
         /// <param name="quaternion2">Source <see cref="T:Microsoft.Xna.Framework.Quaternion" />.</param>
         /// <param name="amount">The blend amount where 0 returns <paramref name="quaternion1" /> and 1 <paramref name="quaternion2" />.</param>
         /// <param name="result">The result of spherical linear blending between two quaternions as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in QuaternionSimdExtensions for better performance.")]
         public static void Slerp(
             in Quaternion quaternion1,
             in Quaternion quaternion2,
@@ -54,6 +57,8 @@ public static class QuaternionExtensions
         /// <param name="quaternion1">Source <see cref="T:Microsoft.Xna.Framework.Quaternion" />.</param>
         /// <param name="quaternion2">Source <see cref="T:Microsoft.Xna.Framework.Quaternion" />.</param>
         /// <param name="result">The result of the quaternion multiplication as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in QuaternionSimdExtensions for better performance.")]
         public static void Multiply(
             in Quaternion quaternion1,
             in Quaternion quaternion2,
@@ -83,6 +88,8 @@ public static class QuaternionExtensions
         /// <param name="axis">The axis of rotation.</param>
         /// <param name="angle">The angle in radians.</param>
         /// <param name="result">The new quaternion builded from axis and angle as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in QuaternionSimdExtensions for better performance.")]
         public static void CreateFromAxisAngle(in Vector3 axis, float angle, out Quaternion result)
         {
             double x = (double)angle * 0.5;

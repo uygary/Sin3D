@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using System.Runtime.CompilerServices;
 
 namespace Sin3d.Extensions;
 
@@ -11,6 +12,8 @@ public static class MatrixExtensions
         /// </summary>
         /// <param name="quaternion"><see cref="T:Microsoft.Xna.Framework.Quaternion" /> of rotation moment.</param>
         /// <param name="result">The rotation <see cref="T:Microsoft.Xna.Framework.Matrix" /> as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in MatrixSimdExtensions for better performance.")]
         public static void CreateFromQuaternion(in Quaternion quaternion, out Matrix result)
         {
             float num1 = quaternion.X * quaternion.X;
@@ -46,6 +49,8 @@ public static class MatrixExtensions
         /// <param name="matrix1">Source <see cref="T:Microsoft.Xna.Framework.Matrix" />.</param>
         /// <param name="matrix2">Source <see cref="T:Microsoft.Xna.Framework.Matrix" />.</param>
         /// <param name="result">Result of the matrix multiplication as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in MatrixSimdExtensions for better performance.")]
         public static void Multiply(in Matrix matrix1, in Matrix matrix2, out Matrix result)
         {
             float num1 = (float)((double)matrix1.M11 * (double)matrix2.M11 + (double)matrix1.M12 * (double)matrix2.M21 + (double)matrix1.M13 * (double)matrix2.M31 + (double)matrix1.M14 * (double)matrix2.M41);
@@ -87,6 +92,8 @@ public static class MatrixExtensions
         /// </summary>
         /// <param name="position">X,Y and Z coordinates of translation.</param>
         /// <param name="result">The translation <see cref="T:Microsoft.Xna.Framework.Matrix" /> as an output parameter.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("This method cannot be inlined due to its size, and should be replaced with the SIMD-accelerated version in MatrixSimdExtensions for better performance.")]
         public static void CreateTranslation(in Vector3 position, out Matrix result)
         {
             result.M11 = 1f;
