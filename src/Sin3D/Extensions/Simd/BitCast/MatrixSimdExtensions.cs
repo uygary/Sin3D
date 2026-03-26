@@ -1,0 +1,41 @@
+using Microsoft.Xna.Framework;
+using System.Runtime.CompilerServices;
+using SN = System.Numerics;
+
+namespace Sin3d.Extensions.Simd.BitCast;
+
+public static class MatrixSimdExtensions 
+{
+    extension(Matrix)
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CreateFromQuaternion(in Quaternion quaternion, out Matrix result)
+        {
+            // Cast strictly without allocations straight into hardware accelerated System.Numerics
+            SN.Matrix4x4 simMat = SN.Matrix4x4.CreateFromQuaternion(
+                Unsafe.As<Quaternion, SN.Quaternion>(ref Unsafe.AsRef(in quaternion))
+            );
+            result = Unsafe.BitCast<SN.Matrix4x4, Matrix>(simMat);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Multiply(in Matrix matrix1, in Matrix matrix2, out Matrix result)
+        {
+            // System.Numerics naturally utilizes modern hardware Intrinsics (AVX2, AVX512, Neon) without branching
+            ref SN.Matrix4x4 m1 = ref Unsafe.As<Matrix, SN.Matrix4x4>(ref Unsafe.AsRef(in matrix1));
+            ref SN.Matrix4x4 m2 = ref Unsafe.As<Matrix, SN.Matrix4x4>(ref Unsafe.AsRef(in matrix2));
+            
+            SN.Matrix4x4 simMat = m1 * m2;
+            result = Unsafe.BitCast<SN.Matrix4x4, Matrix>(simMat);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CreateTranslation(in Vector3 position, out Matrix result)
+        {
+            SN.Matrix4x4 simMat = SN.Matrix4x4.CreateTranslation(
+                Unsafe.As<Vector3, SN.Vector3>(ref Unsafe.AsRef(in position))
+            );
+            result = Unsafe.BitCast<SN.Matrix4x4, Matrix>(simMat);
+        }
+    }
+}
