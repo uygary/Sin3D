@@ -179,6 +179,9 @@ public class Renderer3d
 
                 //handling effect lighting
                 effect.Alpha = _effectAlpha;
+                effect.DiffuseColor = model.DiffuseColor;
+                effect.EmissiveColor = model.EmissiveColor;
+
                 if (_defaultLightingEnabled)
                 {
                     effect.EnableDefaultLighting();

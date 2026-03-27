@@ -39,6 +39,18 @@ public class Model3d
     /// </summary>
     public List<Texture2D?> MeshTextures { get => _meshTextures; set => _meshTextures = value; }
 
+    private Vector3 _diffuseColor = Vector3.One;
+    /// <summary>
+    /// The diffuse color tint applied to the model. Defaults to White (1,1,1).
+    /// </summary>
+    public Vector3 DiffuseColor { get => _diffuseColor; set => _diffuseColor = value; }
+
+    private Vector3 _emissiveColor = Vector3.Zero;
+    /// <summary>
+    /// The emissive color tint applied to the model. Defaults to Black (0,0,0).
+    /// </summary>
+    public Vector3 EmissiveColor { get => _emissiveColor; set => _emissiveColor = value; }
+
     private Matrix _worldMatrix;
     /// <summary>
     /// The model's world matrix.
