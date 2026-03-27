@@ -1,0 +1,12 @@
+<Project>
+  <Target Name="BuildContent" BeforeTargets="BeforeCompile" Condition="'$(Configuration)' == 'Debug'">
+    <PropertyGroup>
+      <ContentOutput>$(ProjectDir)$(OutputPath)</ContentOutput>
+      <ContentTemp>$(ProjectDir)$(IntermediateOutputPath)</ContentTemp>
+      <ContentArgs>build -p $(MonoGamePlatform) -s Sin3D_Planetarium.Content/Assets -o $(ContentOutput) -i $(ContentTemp)</ContentArgs>
+      <ContentCommand>$(MSBuildThisFileDirectory)bin\Debug\net10.0\Sin3D_Planetarium.Content</ContentCommand>
+    </PropertyGroup>
+    <MSBuild Projects="$(MSBuildThisFileDirectory)Sin3D_Planetarium.Content.csproj" Targets="Build" RemoveProperties="TargetFramework;RuntimeIdentifier;RuntimeIdentifiers" />
+    <Exec Command="$(ContentCommand) $(ContentArgs)" WorkingDirectory="$(MSBuildThisFileDirectory)..\" CustomErrorRegularExpression="\[E\] .+" CustomWarningRegularExpression="\[W\] .+" />
+   </Target>
+</Project>

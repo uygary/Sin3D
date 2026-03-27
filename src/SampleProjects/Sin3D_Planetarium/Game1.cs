@@ -1,7 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Sin3d;
+using Sin3D._Camera3D;
+using Sin3D._Renderer3D;
+using Sin3D._Model3D;
 using planet;
 
 namespace Sin3DPlanetarium;
@@ -9,14 +11,14 @@ namespace Sin3DPlanetarium;
 public class Game1 : Game
 {
     //renderer+camera settings
-    Camera3d cam;
+    Camera3D cam;
     float moveSpeed = 0.025f;
     float rotationSpeed = MathHelper.ToRadians(0.005f);
-    Renderer3d renderer;
+    Renderer3D renderer;
 
     //skybox/sun settings
-    Model3d skybox;
-    Model3d sun;
+    Model3D skybox;
+    Model3D sun;
     Vector3 ambientLightColor = new Vector3(0.95f, 0.95f, 0.95f);
     Vector3 sunLightColor = new Vector3(0.004f, 0.0015f, 0f);
 
@@ -63,7 +65,7 @@ public class Game1 : Game
     protected override void Initialize()
     {
         //cam set up
-        cam = new Camera3d(
+        cam = new Camera3D(
             new Vector3(-1450f, 900f, -2050f),
             Vector3.Zero,
             MathHelper.ToRadians(60f),
@@ -75,7 +77,7 @@ public class Game1 : Game
         cam.Pitch = MathHelper.ToRadians(-21);
 
         //renderer set up
-        renderer = new Renderer3d(
+        renderer = new Renderer3D(
             GraphicsDevice
         );
 
@@ -90,7 +92,7 @@ public class Game1 : Game
         Model saturnModel = Content.Load<Model>("saturn");
 
         //creating skybox
-        skybox = new Model3d(
+        skybox = new Model3D(
             Vector3.Zero,
             Quaternion.Identity,
             5000f,
@@ -99,7 +101,7 @@ public class Game1 : Game
         );
 
         //creating sun
-        sun = new Model3d(
+        sun = new Model3D(
             Vector3.Zero,
             new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0, 0, (float)Math.Cos(MathHelper.PiOver4)),
             100f,
@@ -113,7 +115,7 @@ public class Game1 : Game
         trailTexture.SetData([ new Color(253, 221, 142) ]);
 
         //creating moon
-        Model3d moonModel = new Model3d(
+        Model3D moonModel = new Model3D(
             new Vector3(0f, 80f, 950f),
             new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)),
             5f,
@@ -123,15 +125,15 @@ public class Game1 : Game
         moon = new Moon(moonRotateSpeed, moonOrbitSpeed, moonModel, trailModel, trailTexture, trailParticleScale, minDistanceBetweenTrailParticles, 0f, relativeMoonPos);
 
         //creating planets
-        Model3d[] planetModels = [
-            new Model3d(new Vector3(0f, -20f, dists[0]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[0], sphereModel, [Content.Load<Texture2D>("2k_mercury")]),
-            new Model3d(new Vector3(0f, 10f, dists[1]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[1], sphereModel, [Content.Load<Texture2D>("2k_venus_atmosphere")]),
-            new Model3d(new Vector3(0f, 0f, dists[2]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[2], sphereModel, [Content.Load<Texture2D>("EarthComposited_2k")]),
-            new Model3d(new Vector3(0f, 20f, dists[3]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[3], sphereModel, [Content.Load<Texture2D>("2k_mars")]),
-            new Model3d(new Vector3(0f, -10f, dists[4]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[4], sphereModel, [Content.Load<Texture2D>("2k_jupiter")]),
-            new Model3d(new Vector3(0f, -25f, dists[5]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[5], saturnModel, [Content.Load<Texture2D>("saturn_rings"), Content.Load<Texture2D>("2k_saturn")]),
-            new Model3d(new Vector3(0f, 0f, dists[6]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[6], sphereModel, [Content.Load<Texture2D>("2k_uranus")]),
-            new Model3d(new Vector3(0f, 5f, dists[7]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[7], sphereModel, [Content.Load<Texture2D>("2k_neptune")])
+        Model3D[] planetModels = [
+            new Model3D(new Vector3(0f, -20f, dists[0]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[0], sphereModel, [Content.Load<Texture2D>("2k_mercury")]),
+            new Model3D(new Vector3(0f, 10f, dists[1]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[1], sphereModel, [Content.Load<Texture2D>("2k_venus_atmosphere")]),
+            new Model3D(new Vector3(0f, 0f, dists[2]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[2], sphereModel, [Content.Load<Texture2D>("EarthComposited_2k")]),
+            new Model3D(new Vector3(0f, 20f, dists[3]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[3], sphereModel, [Content.Load<Texture2D>("2k_mars")]),
+            new Model3D(new Vector3(0f, -10f, dists[4]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[4], sphereModel, [Content.Load<Texture2D>("2k_jupiter")]),
+            new Model3D(new Vector3(0f, -25f, dists[5]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[5], saturnModel, [Content.Load<Texture2D>("saturn_rings"), Content.Load<Texture2D>("2k_saturn")]),
+            new Model3D(new Vector3(0f, 0f, dists[6]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[6], sphereModel, [Content.Load<Texture2D>("2k_uranus")]),
+            new Model3D(new Vector3(0f, 5f, dists[7]), new Quaternion(-(float)Math.Sin(MathHelper.PiOver4), 0f, 0f, (float)Math.Cos(MathHelper.PiOver4)), sizes[7], sphereModel, [Content.Load<Texture2D>("2k_neptune")])
         ];
         //creating an array of planets from the data
         planets = new Planet[planetModels.Length];
@@ -180,8 +182,8 @@ public class Game1 : Game
         renderer.ResetRenderingSettings();
 
         //drawing opaque objects
-        renderer.DrawModel3d(skybox, cam);
-        renderer.DrawModel3d(sun, cam);        
+        renderer.DrawModel3D(skybox, cam);
+        renderer.DrawModel3D(sun, cam);        
         DrawMoon();
         foreach (Planet planet in planets)
         {
@@ -257,7 +259,7 @@ public class Game1 : Game
         renderer.AmbientLightColor = ambientLightColor;
         DirectionalLightPropertyGroup moonLight = new DirectionalLightPropertyGroup(true, moon.PlanetModel.Position, sunLightColor, Vector3.Zero);
         renderer.DirectionalLight0 = moonLight;
-        renderer.DrawModel3d(moon.PlanetModel, cam);
+        renderer.DrawModel3D(moon.PlanetModel, cam);
 
         renderer.ResetRenderingSettings();
     }
@@ -269,7 +271,7 @@ public class Game1 : Game
         renderer.AmbientLightColor = ambientLightColor;
         DirectionalLightPropertyGroup dirLight = new DirectionalLightPropertyGroup(true, planet.PlanetModel.Position, sunLightColor, Vector3.Zero);
         renderer.DirectionalLight0 = dirLight;
-        renderer.DrawModel3d(planet.PlanetModel, cam);
+        renderer.DrawModel3D(planet.PlanetModel, cam);
 
         renderer.ResetRenderingSettings();
     }
@@ -280,7 +282,7 @@ public class Game1 : Game
         for (int i = 0; i < planet.Trail.Count; i++)
         {
             renderer.EffectAlpha = 1f - (Math.Abs(i - (planet.Trail.Count / 2f)) / (planet.Trail.Count / 2f));
-            renderer.DrawModel3d(planet.Trail[i], cam);
+            renderer.DrawModel3D(planet.Trail[i], cam);
             
             renderer.ResetRenderingSettings();
         }
