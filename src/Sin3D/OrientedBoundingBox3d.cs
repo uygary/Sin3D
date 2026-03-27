@@ -5,7 +5,7 @@ namespace Sin3d;
 /// <summary>
 /// A 3D oriented bounding box class for collision detection.
 /// </summary>
-public class OrientedBoundingBox3d
+public class OrientedBoundingBox3D
 {
     private readonly Vector3[] _vertices;
     /// <summary>
@@ -17,7 +17,7 @@ public class OrientedBoundingBox3d
     /// Creates a new oriented bounding box from an axis-aligned bounding box.
     /// </summary>
     /// <param name="aabb"></param>
-    public OrientedBoundingBox3d (BoundingBox aabb)
+    public OrientedBoundingBox3D (BoundingBox aabb)
     {
         _vertices = aabb.GetCorners();
     }
@@ -39,7 +39,7 @@ public class OrientedBoundingBox3d
     /// </summary>
     /// <param name="box2">The other box.</param>
     /// <returns>Boolean - whether an intersection was detected.</returns>
-    public bool Intersects(OrientedBoundingBox3d box2)
+    public bool Intersects(OrientedBoundingBox3D box2)
     {
         Vector3[] box1LocalAxes = GetLocalAxes(_vertices);
         Vector3[] box2LocalAxes = GetLocalAxes(box2.Vertices);

@@ -6,9 +6,9 @@ namespace Sin3d;
 
 /// <summary>
 /// Display provider for desktop (flat screen) rendering.
-/// Applies Panini projection correction to <see cref="RenderLayerType.Scene3d"/> layers
+/// Applies Panini projection correction to <see cref="RenderLayerType.Scene3D"/> layers
 /// during compositing to fix perspective distortion of spheres at screen edges.
-/// <see cref="RenderLayerType.Overlay2d"/> layers are composited as-is.
+/// <see cref="RenderLayerType.Overlay2D"/> layers are composited as-is.
 /// </summary>
 public class DesktopDisplayProvider : IDisplayProvider
 {
@@ -137,7 +137,7 @@ public class DesktopDisplayProvider : IDisplayProvider
         {
             RenderLayer layer = layers[sortedIndices[s]];
 
-            if (layer.LayerType == RenderLayerType.Scene3d && _paniniEffect is not null)
+            if (layer.LayerType == RenderLayerType.Scene3D && _paniniEffect is not null)
             {
                 // Apply Panini projection correction
                 _paniniEffect.Parameters["PaniniD"]?.SetValue(_paniniD);

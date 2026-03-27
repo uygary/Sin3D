@@ -5,9 +5,9 @@ using Sin3d.Extensions.Simd;
 namespace Sin3d;
 
 /// <summary>
-/// A 3D renderer class used for drawing <see cref="Model3d"/> objects and handling ambient lighting, directional lighting and fog.
+/// A 3D renderer class used for drawing <see cref="Model3D"/> objects and handling ambient lighting, directional lighting and fog.
 /// </summary>
-public class Renderer3d
+public class Renderer3D
 {
     private readonly GraphicsDevice _graphicsDevice;
     private readonly bool _useCrr;
@@ -79,11 +79,11 @@ public class Renderer3d
     public float FogEnd { get => _fogEnd; set => _fogEnd = value; }
 
     /// <summary>
-    /// Creates a new <see cref="Renderer3d"/> object.
+    /// Creates a new <see cref="Renderer3D"/> object.
     /// </summary>
     /// <param name="graphicsDevice">The graphics device that the renderer will target.</param>
     /// <param name="useCrr">Whether to use the camera-relative rendering projection matrix.</param>
-    public Renderer3d(GraphicsDevice graphicsDevice, bool useCrr)
+    public Renderer3D(GraphicsDevice graphicsDevice, bool useCrr)
     {
         _graphicsDevice = graphicsDevice;
         _useCrr = useCrr;
@@ -122,11 +122,13 @@ public class Renderer3d
     /// </summary>
     /// <param name="model">The model that will be drawn.</param>
     /// <param name="camera">The camera that will be used as the viewpoint from which to draw from.</param>
-    public void DrawModel3d(Model3d model, Camera3d camera)
+    public void DrawModel3D(Model3D model, Camera3d camera)
     {
         //handling transparency
         _graphicsDevice.BlendState = BlendState.Opaque;
         _graphicsDevice.DepthStencilState = DepthStencilState.Default;
+        
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         if (_effectAlpha != 1f)
         {
             _graphicsDevice.BlendState = BlendState.AlphaBlend;
@@ -214,6 +216,97 @@ public class Renderer3d
                 effect.FogStart = _fogStart;
                 effect.FogEnd = _fogEnd;
             }
+            mesh.Draw();
+        }
+    }
+
+    /// <summary>
+    /// Draws a Model3D using a custom effect. Handles World/View/Projection setup (with CRR support),
+    /// material properties, scene lighting, and texture binding.
+    /// An optional callback can be provided to configure the effect per mesh part
+    /// (e.g., selecting a technique based on vertex declaration).
+    /// </summary>
+    /// <param name="model">The model that will be drawn.</param>
+    /// <param name="camera">The camera viewpoint.</param>
+    /// <param name="effect">The custom effect to apply.</param>
+    /// <param name="configurePart">Optional per-mesh-part configuration callback.</param>
+    /// <remarks>configurePart is used for things like technique selection.</remarks> 
+    public void DrawModel3D(Model3D model,
+        Camera3d camera,
+        Effect effect,
+        Action<Effect, ModelMeshPart>? configurePart = null)
+    {
+        _graphicsDevice.BlendState = BlendState.Opaque;
+        _graphicsDevice.DepthStencilState = DepthStencilState.Default;
+        
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        if (_effectAlpha != 1f)
+        {
+            _graphicsDevice.BlendState = BlendState.AlphaBlend;
+            _graphicsDevice.DepthStencilState = DepthStencilState.DepthRead;
+        }
+
+        for (int i = 0; i < model.BaseModel.Meshes.Count; i++)
+        {
+            ModelMesh mesh = model.BaseModel.Meshes[i];
+
+            // Compute world/view matrices with CRR support
+            Matrix world;
+            Matrix view;
+
+            if (_useCrr)
+            {
+                // Perform CRR translation
+                Vector3 translation = -camera.Position;
+                Matrix.CreateTranslation(in translation, out Matrix translationMatrix);
+                Matrix worldMatrix = model.WorldMatrix;
+                Matrix.Multiply(in worldMatrix, in translationMatrix, out world);
+                view = camera.ViewMatrix;
+
+                //Clear the translation
+                view.M41 = 0;
+                view.M42 = 0;
+                view.M43 = 0;
+            }
+            else
+            {
+                world = model.WorldMatrix;
+                view = camera.ViewMatrix;
+            }
+
+            // Set shared parameters
+            effect.Parameters["World"]?.SetValue(world);
+            effect.Parameters["View"]?.SetValue(view);
+            effect.Parameters["Projection"]?.SetValue(camera.ProjectionMatrix);
+            effect.Parameters["DiffuseColor"]?.SetValue(model.DiffuseColor);
+            effect.Parameters["EmissiveColor"]?.SetValue(model.EmissiveColor);
+            effect.Parameters["Alpha"]?.SetValue(_effectAlpha);
+
+            // Scene lighting
+            effect.Parameters["AmbientLightColor"]?.SetValue(_ambientLightColor);
+            if (_directionalLight0.Enabled)
+            {
+                effect.Parameters["DirLight0Direction"]?.SetValue(_directionalLight0.Direction);
+                effect.Parameters["DirLight0Color"]?.SetValue(_directionalLight0.DiffuseColor);
+            }
+            else
+            {
+                effect.Parameters["DirLight0Color"]?.SetValue(Vector3.Zero);
+            }
+
+            // Texture
+            if (model.MeshTextures is not null && i < model.MeshTextures.Count)
+            {
+                effect.Parameters["Texture"]?.SetValue(model.MeshTextures[i]);
+            }
+
+            // Configure and assign effect to each mesh part
+            foreach (ModelMeshPart part in mesh.MeshParts)
+            {
+                configurePart?.Invoke(effect, part);
+                part.Effect = effect;
+            }
+
             mesh.Draw();
         }
     }

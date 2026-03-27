@@ -9,10 +9,10 @@ public enum RenderLayerType
     /// <summary>
     /// 3D scene content that may receive projection correction (e.g. Panini on Desktop).
     /// </summary>
-    Scene3d,
+    Scene3D,
 
     /// <summary>
     /// Flat/2D content that is always composited as-is (rectilinear).
     /// </summary>
-    Overlay2d,
+    Overlay2D,
 }

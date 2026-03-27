@@ -7,7 +7,7 @@ namespace Sin3d;
 /// <summary>
 /// A 3D model class for handling position, rotation, scale and collision detection.
 /// </summary>
-public class Model3d
+public class Model3D
 {
     private Vector3 _position;
     /// <summary>
@@ -69,13 +69,13 @@ public class Model3d
     public List<BoundingBox> LocalAxisAlignedBoundingBoxes { get => _localAxisAlignedBoundingBoxes; set => _localAxisAlignedBoundingBoxes = value; }
 
     /// <summary>
-    /// Creates a new <see cref="Model3d"/> object with position, rotation, and scale settings.
+    /// Creates a new <see cref="Model3D"/> object with position, rotation, and scale settings.
     /// </summary>
     /// <param name="position">The initial (x, y, z) position.</param>
     /// <param name="rotation">The initial quaternion rotation.</param>
     /// <param name="scale">The initial scale.</param>
     /// <param name="baseModel">The imported model.</param>
-    public Model3d(Vector3 position, Quaternion rotation, float scale, Model baseModel)
+    public Model3D(Vector3 position, Quaternion rotation, float scale, Model baseModel)
     {
         _position = position;
         _rotation = rotation;
@@ -86,14 +86,14 @@ public class Model3d
     }
 
     /// <summary>
-    /// Creates a new <see cref="Model3d"/> object with position, rotation, scale and texture settings.
+    /// Creates a new <see cref="Model3D"/> object with position, rotation, scale and texture settings.
     /// </summary>
     /// <param name="position">The initial (x, y, z) position.</param>
     /// <param name="rotation">The initial quaternion rotation.</param>
     /// <param name="scale">The initial scale.</param>
     /// <param name="baseModel">The imported model.</param>
     /// <param name="meshTextures">The initial list of textures that will be mapped to the model's meshes.</param> 
-    public Model3d(Vector3 position, Quaternion rotation, float scale, Model baseModel, List<Texture2D?> meshTextures)
+    public Model3D(Vector3 position, Quaternion rotation, float scale, Model baseModel, List<Texture2D?> meshTextures)
     {
         _position = position;
         _rotation = rotation;
@@ -155,7 +155,7 @@ public class Model3d
     /// </summary>
     /// <param name="model2">The other model.</param>
     /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool BoundingSphereIntersects(Model3d model2)
+    public bool BoundingSphereIntersects(Model3D model2)
     {
         foreach (ModelMesh mesh1 in _baseModel.Meshes)
         {
@@ -176,7 +176,7 @@ public class Model3d
     /// </summary>
     /// <param name="model2">The other model.</param>
     /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool AxisAlignedBoundingBoxIntersects(Model3d model2)
+    public bool AxisAlignedBoundingBoxIntersects(Model3D model2)
     {
         //creating the transformed axis-aligned bounding boxes and checking if they collide
         foreach (BoundingBox box1 in _localAxisAlignedBoundingBoxes)
@@ -213,17 +213,17 @@ public class Model3d
     /// </summary>
     /// <param name="model2">The other model.</param>
     /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool OrientedBoundingBoxIntersects(Model3d model2)
+    public bool OrientedBoundingBoxIntersects(Model3D model2)
     {
         //creating the oriented bounding boxes (from the local AABBs) and checking if they collide
         foreach (BoundingBox box1 in _localAxisAlignedBoundingBoxes)
         {
-            OrientedBoundingBox3d obb1 = new OrientedBoundingBox3d(box1);
+            OrientedBoundingBox3D obb1 = new OrientedBoundingBox3D(box1);
             obb1.TransformVertices(_worldMatrix);
 
             foreach (BoundingBox box2 in model2.LocalAxisAlignedBoundingBoxes)
             {
-                OrientedBoundingBox3d obb2 = new OrientedBoundingBox3d(box2);
+                OrientedBoundingBox3D obb2 = new OrientedBoundingBox3D(box2);
                 obb2.TransformVertices(model2.WorldMatrix);
 
                 if (obb1.Intersects(obb2))
@@ -241,7 +241,7 @@ public class Model3d
     /// </summary>
     /// <param name="model2">The other model.</param>
     /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool Intersects(Model3d model2)
+    public bool Intersects(Model3D model2)
     {
         if (!BoundingSphereIntersects(model2))
         {

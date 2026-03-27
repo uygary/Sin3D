@@ -6,7 +6,7 @@ namespace Sin3d;
 /// <summary>
 /// A basic VR display provider that supports stereo rendering with two eyes.
 /// This implementation provides standard symmetric projection matrices with an IPD offset.
-/// In a real VR implementation (e.g. OpenXR), this would use asymmetric frustums provided by the VR runtime.
+/// In a modern VR implementation (via OpenXR), it would use asymmetric frustums provided by the VR runtime.
 /// </summary>
 public class StereoscopicDisplayProvider : IDisplayProvider
 {
@@ -32,12 +32,13 @@ public class StereoscopicDisplayProvider : IDisplayProvider
     public float PaniniD => 0.0f;
 
     /// <summary>
-    /// Creates a new <see cref="VrDisplayProvider"/>.
+    /// Creates a new <see cref="StereoscopicDisplayProvider"/>.
     /// </summary>
     /// <param name="fov">The field of view in radians.</param>
     /// <param name="nearPlaneDist">The near plane render distance.</param>
     /// <param name="farPlaneDist">The far plane render distance.</param>
-    /// <param name="ipd">Interpupillary distance in world units (e.g., 0.064 for 64mm if 1 unit = 1 meter).</param>
+    /// <param name="ipd">Interpupillary distance in world units.</param>
+    /// <remarks>IPD would likely be 0.070 for 70mm, etc.</remarks>
     public StereoscopicDisplayProvider(float fov, float nearPlaneDist, float farPlaneDist, float ipd = 0.064f)
     {
         _fov = fov;

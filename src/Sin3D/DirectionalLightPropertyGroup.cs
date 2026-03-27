@@ -3,7 +3,7 @@
 namespace Sin3d;
 
 /// <summary>
-/// A group of properties for a directional light - used to set the DirectionalLight fields of a <see cref="Renderer3d"/> object.
+/// A group of properties for a directional light - used to set the DirectionalLight fields of a <see cref="Renderer3D"/> object.
 /// </summary>
 public struct DirectionalLightPropertyGroup
 {

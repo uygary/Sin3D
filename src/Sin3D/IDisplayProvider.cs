@@ -65,7 +65,7 @@ public interface IDisplayProvider : IDisposable
 
     /// <summary>
     /// Composites the given render layers to the current render target (typically the backbuffer),
-    /// applying per-layer post-processing as appropriate (e.g. Panini for <see cref="RenderLayerType.Scene3d"/> on Desktop).
+    /// applying per-layer post-processing as appropriate (e.g. Panini for <see cref="RenderLayerType.Scene3D"/> on Desktop).
     /// Layers are drawn in ascending <see cref="RenderLayer.DrawOrder"/>.
     /// </summary>
     /// <param name="spriteBatch">The sprite batch to use for drawing fullscreen quads.</param>
