@@ -1,7 +1,8 @@
 <Solution>
   <Folder Name="/SampleProjects/">
     <Project Path="SampleProjects/Sin3D_Planetarium.Content/Sin3D_Planetarium.Content.csproj" />
-    <Project Path="SampleProjects/Sin3d_Planetarium/Sin3d_Planetarium.csproj" />
+    <Project Path="SampleProjects/Sin3D_Planetarium/Sin3D_Planetarium.csproj" />
   </Folder>
-  <Project Path="Sin3d/Sin3d.csproj" />
+  <Project Path="Sin3D.Tests/Sin3D.Tests.csproj" Id="f4b15f40-3913-4588-ae75-00e93ac93e22" />
+  <Project Path="Sin3D/Sin3D.csproj"  />
 </Solution>
