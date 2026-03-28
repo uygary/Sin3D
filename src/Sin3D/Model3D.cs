@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Sin3d.Extensions;
 using Sin3d.Extensions.Simd;
 
 namespace Sin3d;
@@ -68,6 +69,19 @@ public class Model3D
     /// </summary>
     public List<BoundingBox> LocalAxisAlignedBoundingBoxes { get => _localAxisAlignedBoundingBoxes; set => _localAxisAlignedBoundingBoxes = value; }
 
+    #region Per-frame scratch buffers
+
+    /* These should be pre-allocated, and never resized. */
+
+    // Shared scratch corners buffer for AABB transforms
+    private readonly Vector3[] _scratchCorners = new Vector3[8];
+
+    // Reusable OBB instances for narrow-phase checks
+    private readonly OrientedBoundingBox3D _scratchLocalObb = new();
+    private readonly OrientedBoundingBox3D _scratchOtherObb = new();
+
+    #endregion Per-frame scratch buffers
+
     /// <summary>
     /// Creates a new <see cref="Model3D"/> object with position, rotation, and scale settings.
     /// </summary>
@@ -116,52 +130,61 @@ public class Model3D
         Matrix.Multiply(in srMatrix, in translationMatrix, out _worldMatrix);
     }
 
+    #region Collision Detection
+
     /// <summary>
     /// Builds the local axis-aligned bounding boxes from the model's meshes (must be done for collision detection to work).
     /// </summary>
+    /// <remarks>
+    /// Call once at load time. The local AABBs are in model-space and do not change;
+    /// world-space transformation is applied per-frame via the cached scratch buffers.
+    /// </remarks>
     public void BuildLocalAxisAlignedBoundingBoxes()
     {
         _localAxisAlignedBoundingBoxes.Clear();
-        //Creating an AABB for each mesh
-        foreach (ModelMesh mesh in _baseModel.Meshes)
+        for (var i = 0; i < _baseModel.Meshes.Count; i++)
         {
-            _localAxisAlignedBoundingBoxes.Add(CreateBoundingBox(mesh));
+            _localAxisAlignedBoundingBoxes.Add(CreateBoundingBox(_baseModel.Meshes[i]));
         }
     }
 
-    //Creates an axis-aligned bounding box around a mesh
-    private BoundingBox CreateBoundingBox(ModelMesh mesh)
+    // Creates an axis-aligned bounding box around a mesh (load-time only, allocation is fine here)
+    private static BoundingBox CreateBoundingBox(ModelMesh mesh)
     {
         Vector3 minVert = new Vector3(float.MaxValue);
         Vector3 maxVert = new Vector3(float.MinValue);
-        
-        foreach (ModelMeshPart meshPart in mesh.MeshParts)
+
+        for (var p = 0; p < mesh.MeshParts.Count; p++)
         {
-            int stride = meshPart.VertexBuffer.VertexDeclaration.VertexStride;
+            ModelMeshPart meshPart = mesh.MeshParts[p];
+            var stride = meshPart.VertexBuffer.VertexDeclaration.VertexStride;
             VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[meshPart.NumVertices];
             meshPart.VertexBuffer.GetData(meshPart.VertexOffset * stride, vertices, 0, meshPart.NumVertices, stride);
-            foreach (VertexPositionNormalTexture vert in vertices)
+            for (var v = 0; v < vertices.Length; v++)
             {
-                Vector3 vertPoint = vert.Position;
+                Vector3 vertPoint = vertices[v].Position;
                 minVert = Vector3.Min(minVert, vertPoint);
                 maxVert = Vector3.Max(maxVert, vertPoint);
             }
         }
+
         return new BoundingBox(minVert, maxVert);
     }
 
     /// <summary>
     /// Checks if the bounding spheres of 2 models intersect.
     /// </summary>
-    /// <param name="model2">The other model.</param>
-    /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool BoundingSphereIntersects(Model3D model2)
+    /// <param name="otherModel">The other model.</param>
+    /// <returns>Whether an intersection was detected.</returns>
+    public bool BoundingSphereIntersects(Model3D otherModel)
     {
-        foreach (ModelMesh mesh1 in _baseModel.Meshes)
+        for (var i = 0; i < _baseModel.Meshes.Count; i++)
         {
-            foreach (ModelMesh mesh2 in model2.BaseModel.Meshes)
+            BoundingSphere s1 = _baseModel.Meshes[i].BoundingSphere.Transform(_worldMatrix);
+            for (var j = 0; j < otherModel.BaseModel.Meshes.Count; j++)
             {
-                if (mesh1.BoundingSphere.Transform(_worldMatrix).Intersects(mesh2.BoundingSphere.Transform(model2.WorldMatrix)))
+                BoundingSphere s2 = otherModel.BaseModel.Meshes[j].BoundingSphere.Transform(otherModel.WorldMatrix);
+                if (s1.Intersects(s2))
                 {
                     return true;
                 }
@@ -172,61 +195,24 @@ public class Model3D
     }
 
     /// <summary>
-    /// Checks if the axis-aligned bounding boxes of 2 models intersect (local axis-aligned bounding boxes must be built).
+    /// Checks if the axis-aligned bounding boxes of 2 models intersect.
     /// </summary>
-    /// <param name="model2">The other model.</param>
-    /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool AxisAlignedBoundingBoxIntersects(Model3D model2)
+    /// <param name="otherModel">The other model.</param>
+    /// <returns>Whether an intersection was detected.</returns>
+    /// <remarks>
+    /// AABBs must be built prior to calling this.
+    /// Zero-allocation. Uses a shared scratch buffer for corner transformations.
+    /// </remarks>
+    public bool AxisAlignedBoundingBoxIntersects(Model3D otherModel)
     {
-        //creating the transformed axis-aligned bounding boxes and checking if they collide
-        foreach (BoundingBox box1 in _localAxisAlignedBoundingBoxes)
+        for (var i = 0; i < _localAxisAlignedBoundingBoxes.Count; i++)
         {
-            BoundingBox transformedBox1 = GetTransformedAxisAlignedBoundingBox(box1, _worldMatrix);
-            foreach (BoundingBox box2 in model2.LocalAxisAlignedBoundingBoxes)
+            BoundingBox transformedLocalBox = TransformAabb(_localAxisAlignedBoundingBoxes[i], in _worldMatrix);
+            for (var j = 0; j < otherModel._localAxisAlignedBoundingBoxes.Count; j++)
             {
-                BoundingBox transformedBox2 = GetTransformedAxisAlignedBoundingBox(box2, model2.WorldMatrix);
-                if (transformedBox1.Intersects(transformedBox2))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    //method for getting a transformed axis-aligned bounding box given a local AABB and a transformation matrix
-    BoundingBox GetTransformedAxisAlignedBoundingBox(BoundingBox localBox, Matrix transform)
-    {
-        Vector3[] localBoxVertices = localBox.GetCorners();
-        Vector3[] transformedBoxVertices = new Vector3[localBoxVertices.Length];
-        for (int i = 0; i < localBoxVertices.Length; i++)
-        {
-            Vector3.Transform(in localBoxVertices[i], in transform, out transformedBoxVertices[i]);
-        }
-
-        return BoundingBox.CreateFromPoints(transformedBoxVertices);
-    }
-
-    /// <summary>
-    /// Checks if the oriented bounding boxes of 2 models intersect (local axis-aligned bounding boxes must be built).
-    /// </summary>
-    /// <param name="model2">The other model.</param>
-    /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool OrientedBoundingBoxIntersects(Model3D model2)
-    {
-        //creating the oriented bounding boxes (from the local AABBs) and checking if they collide
-        foreach (BoundingBox box1 in _localAxisAlignedBoundingBoxes)
-        {
-            OrientedBoundingBox3D obb1 = new OrientedBoundingBox3D(box1);
-            obb1.TransformVertices(_worldMatrix);
-
-            foreach (BoundingBox box2 in model2.LocalAxisAlignedBoundingBoxes)
-            {
-                OrientedBoundingBox3D obb2 = new OrientedBoundingBox3D(box2);
-                obb2.TransformVertices(model2.WorldMatrix);
-
-                if (obb1.Intersects(obb2))
+                var otherWorld = otherModel._worldMatrix;
+                BoundingBox transformedOtherBox = TransformAabb(otherModel._localAxisAlignedBoundingBoxes[j], in otherWorld);
+                if (transformedLocalBox.Intersects(transformedOtherBox))
                 {
                     return true;
                 }
@@ -237,25 +223,70 @@ public class Model3D
     }
 
     /// <summary>
-    /// Checks if 2 models intersect using the optimized hierarchy of methods: bounding spheres -> AABB -> OBB (local axis-aligned bounding boxes must be built).
+    /// Transforms a local AABB by a world matrix using the shared scratch buffer.
+    /// Returns a new axis-aligned bounding box that encloses the transformed corners.
     /// </summary>
-    /// <param name="model2">The other model.</param>
-    /// <returns>boolean - whether an intersection was detected.</returns>
-    public bool Intersects(Model3D model2)
+    private BoundingBox TransformAabb(in BoundingBox localBox, in Matrix transform)
     {
-        if (!BoundingSphereIntersects(model2))
+        localBox.ReadonlyGetCorners(_scratchCorners);
+
+        var min = new Vector3(float.MaxValue);
+        var max = new Vector3(float.MinValue);
+
+        for (var i = 0; i < 8; i++)
         {
-            return false;
-        }
-        else if (!AxisAlignedBoundingBoxIntersects(model2))
-        {
-            return false;
-        }
-        else if (!OrientedBoundingBoxIntersects(model2))
-        {
-            return false;
+            Vector3.Transform(in _scratchCorners[i], in transform, out var transformed);
+            min = Vector3.Min(min, transformed);
+            max = Vector3.Max(max, transformed);
         }
 
-        return true;
+        return new BoundingBox(min, max);
     }
+
+    /// <summary>
+    /// Checks if the oriented bounding boxes of 2 models intersect.
+    /// </summary>
+    /// <param name="otherModel">The other model.</param>
+    /// <returns>Whether an intersection was detected.</returns>
+    /// <remarks>
+    /// AABBs must be built prior to calling this.
+    /// Zero-allocation. Reuses two cached <see cref="OrientedBoundingBox3D"/> instances.
+    /// </remarks>
+    public bool OrientedBoundingBoxIntersects(Model3D otherModel)
+    {
+        for (var i = 0; i < _localAxisAlignedBoundingBoxes.Count; i++)
+        {
+            _scratchLocalObb.Reset(_localAxisAlignedBoundingBoxes[i]);
+            _scratchLocalObb.TransformVertices(in _worldMatrix);
+
+            for (var j = 0; j < otherModel._localAxisAlignedBoundingBoxes.Count; j++)
+            {
+                _scratchOtherObb.Reset(otherModel._localAxisAlignedBoundingBoxes[j]);
+                _scratchOtherObb.TransformVertices(in otherModel._worldMatrix);
+
+                if (_scratchLocalObb.Intersects(_scratchOtherObb))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if 2 models intersect using a broad-phase -> narrow-phase cascade:
+    /// Bounding spheres -> AABB -> OBB (local axis-aligned bounding boxes must be built).
+    /// </summary>
+    /// <param name="otherModel">The other model.</param>
+    /// <returns>Whether an intersection was detected.</returns>
+    /// <remarks>AABBs must be built prior to calling this.</remarks>
+    public bool Intersects(Model3D otherModel)
+    {
+        return BoundingSphereIntersects(otherModel)
+               && AxisAlignedBoundingBoxIntersects(otherModel)
+               && OrientedBoundingBoxIntersects(otherModel);
+    }
+
+    #endregion Collision Detection
 }
