@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Sin3D_Planetarium.Content/Sin3D_Planetarium.Content.csproj" />
+  <Project Path="Sin3D_Planetarium/Sin3D_Planetarium.csproj" />
+</Solution>

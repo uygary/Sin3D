@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Sin3d;
+using Sin3D._Model3D;
 
 namespace planet;
 
@@ -10,8 +10,8 @@ class Planet
     //planet settings
     protected float rotateSpeed;
     protected float orbitSpeed;
-    protected Model3d planetModel;
-    public Model3d PlanetModel => planetModel;
+    protected Model3D planetModel;
+    public Model3D PlanetModel => planetModel;
 
     //trail settings
     Model trailModel;
@@ -20,9 +20,9 @@ class Planet
     float minDistanceBetweenTrailParticles;
     float distanceSinceLastTrailParticle = 0f;
     float trailLength;
-    List<Model3d> trail = new ();
-    public List<Model3d> Trail => trail;
-    public Planet(float rotateSpeed, float orbitSpeed, Model3d model, Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength)
+    List<Model3D> trail = new ();
+    public List<Model3D> Trail => trail;
+    public Planet(float rotateSpeed, float orbitSpeed, Model3D model, Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength)
     {
         this.rotateSpeed = rotateSpeed;
         this.orbitSpeed = orbitSpeed;
@@ -57,7 +57,7 @@ class Planet
         if (distanceSinceLastTrailParticle > minDistanceBetweenTrailParticles)
         {
             distanceSinceLastTrailParticle = 0f;
-            trail.Insert(0, new Model3d(prevPos, Quaternion.Identity, trailParticleScale, trailModel, [trailTexture]));
+            trail.Insert(0, new Model3D(prevPos, Quaternion.Identity, trailParticleScale, trailModel, [trailTexture]));
             if (trail.Count >= trailLength)
             {
                 trail.RemoveAt(trail.Count - 1);
@@ -71,7 +71,7 @@ class Planet
 //venus child class for anti-clockwise rotations
 class Venus : Planet
 {
-    public Venus(float rotateSpeed, float orbitSpeed, Model3d model, Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength) : base(rotateSpeed, orbitSpeed, model, trailModel, trailTexture, trailParticleScale, minDistanceBetweenTrailParticles, trailLength) {}
+    public Venus(float rotateSpeed, float orbitSpeed, Model3D model, Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength) : base(rotateSpeed, orbitSpeed, model, trailModel, trailTexture, trailParticleScale, minDistanceBetweenTrailParticles, trailLength) {}
 
     public override void Rotate()
     {
@@ -85,7 +85,7 @@ class Venus : Planet
 //saturn child class for local axis rotation
 class Saturn : Planet
 {
-    public Saturn(float rotateSpeed, float orbitSpeed, Model3d model,  Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength) : base(rotateSpeed, orbitSpeed, model, trailModel, trailTexture, trailParticleScale, minDistanceBetweenTrailParticles, trailLength)
+    public Saturn(float rotateSpeed, float orbitSpeed, Model3D model,  Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength) : base(rotateSpeed, orbitSpeed, model, trailModel, trailTexture, trailParticleScale, minDistanceBetweenTrailParticles, trailLength)
     {
         planetModel.Rotation *= new Quaternion(0f, (float)Math.Sin(MathHelper.ToRadians(20)), 0f, (float)Math.Cos(MathHelper.ToRadians(20))); //giving saturn its tilt
     }
@@ -104,7 +104,7 @@ class Moon : Planet
 {
     float orbitAngle = 0f;
     Vector3 relativeMoonPos;
-    public  Moon(float rotateSpeed, float orbitSpeed, Model3d model, Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength, Vector3 relativeMoonPos) : base(rotateSpeed, orbitSpeed, model, trailModel, trailTexture, trailParticleScale, minDistanceBetweenTrailParticles, trailLength)
+    public  Moon(float rotateSpeed, float orbitSpeed, Model3D model, Model trailModel, Texture2D trailTexture, float trailParticleScale, float minDistanceBetweenTrailParticles, float trailLength, Vector3 relativeMoonPos) : base(rotateSpeed, orbitSpeed, model, trailModel, trailTexture, trailParticleScale, minDistanceBetweenTrailParticles, trailLength)
     {
         this.relativeMoonPos = relativeMoonPos;
     }
