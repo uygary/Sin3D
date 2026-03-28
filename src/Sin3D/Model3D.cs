@@ -288,5 +288,69 @@ public class Model3D
                && OrientedBoundingBoxIntersects(otherModel);
     }
 
+    /// <summary>
+    /// Extracts all triangles from the model, transformed by the given world matrix.
+    /// </summary>
+    /// <param name="worldMatrix">The world matrix to transform vertices by.</param>
+    /// <returns>An array of world-space triangles.</returns>
+    /// <remarks>
+    /// This is a load-time utility. It allocates freely and should NOT be called per-frame.
+    /// Used for building terrain height samplers from map geometry.
+    /// </remarks>
+    public Triangle3[] ExtractTransformedTriangles(in Matrix worldMatrix)
+    {
+        var triangles = new List<Triangle3>();
+
+        for (var m = 0; m < _baseModel.Meshes.Count; m++)
+        {
+            ModelMesh mesh = _baseModel.Meshes[m];
+            for (var p = 0; p < mesh.MeshParts.Count; p++)
+            {
+                ModelMeshPart part = mesh.MeshParts[p];
+                int stride = part.VertexBuffer.VertexDeclaration.VertexStride;
+
+                // Extract vertex positions
+                var vertices = new VertexPositionNormalTexture[part.NumVertices];
+                part.VertexBuffer.GetData(
+                    part.VertexOffset * stride,
+                    vertices, 0, part.NumVertices, stride);
+
+                // Extract indices
+                int indexElementSize = part.IndexBuffer.IndexElementSize == IndexElementSize.SixteenBits ? 2 : 4;
+                int indexCount = part.PrimitiveCount * 3;
+                int[] indices = new int[indexCount];
+
+                if (indexElementSize == 2)
+                {
+                    var shortIndices = new short[indexCount];
+                    part.IndexBuffer.GetData(
+                        part.StartIndex * 2,
+                        shortIndices, 0, indexCount);
+                    for (int i = 0; i < indexCount; i++)
+                    {
+                        indices[i] = shortIndices[i];
+                    }
+                }
+                else
+                {
+                    part.IndexBuffer.GetData(
+                        part.StartIndex * 4,
+                        indices, 0, indexCount);
+                }
+
+                // Build triangles, transformed into world space
+                for (int i = 0; i < indexCount; i += 3)
+                {
+                    Vector3 v0 = Vector3.Transform(vertices[indices[i]].Position, worldMatrix);
+                    Vector3 v1 = Vector3.Transform(vertices[indices[i + 1]].Position, worldMatrix);
+                    Vector3 v2 = Vector3.Transform(vertices[indices[i + 2]].Position, worldMatrix);
+                    triangles.Add(new Triangle3(v0, v1, v2));
+                }
+            }
+        }
+
+        return triangles.ToArray();
+    }
+
     #endregion Collision Detection
 }

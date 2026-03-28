@@ -56,7 +56,7 @@ public class OrientedBoundingBox3D
     /// Re-initializes this OBB from an axis-aligned bounding box.
     /// </summary>
     /// <remarks>This allows reuse, thus zero-allocation.
-    /// Also, AABB is passed by reference, avoiding a new copy.</remarks>
+    /// Also, <c>aabb</c> is passed by reference, avoiding a new copy.</remarks>
     public void Reset(in BoundingBox aabb)
     {
         aabb.ReadonlyGetCorners(_vertices);
