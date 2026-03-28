@@ -787,6 +787,164 @@ namespace Sin3D.Tests
         }
 
         // ──────────────────────────────────────────────
+        //  25. Reset() — pooled reuse
+        // ──────────────────────────────────────────────
+
+        [Fact]
+        public void Reset_ReplacesVerticesCompletely()
+        {
+            var aabbA = new BoundingBox(new Vector3(-1), new Vector3(1));
+            var aabbB = new BoundingBox(new Vector3(-5, -5, -5), new Vector3(5, 5, 5));
+
+            var obb = new OrientedBoundingBox3D(aabbA);
+            Vector3[] cornersA = aabbA.GetCorners();
+            for (int i = 0; i < 8; i++)
+            {
+                Assert.Equal(cornersA[i], obb.Vertices[i]);
+            }
+
+            // Reset with a completely different AABB
+            obb.Reset(aabbB);
+            Vector3[] cornersB = aabbB.GetCorners();
+            for (int i = 0; i < 8; i++)
+            {
+                Assert.Equal(cornersB[i], obb.Vertices[i]);
+            }
+        }
+
+        [Fact]
+        public void Reset_AfterTransform_RestoresUntransformedCorners()
+        {
+            var aabb = new BoundingBox(new Vector3(-1), new Vector3(1));
+            var obb = new OrientedBoundingBox3D(aabb);
+
+            // Transform, then reset — should get original corners back
+            obb.TransformVertices(Matrix.CreateTranslation(100, 200, 300));
+            obb.Reset(aabb);
+
+            Vector3[] expected = aabb.GetCorners();
+            for (int i = 0; i < 8; i++)
+            {
+                Assert.Equal(expected[i], obb.Vertices[i]);
+            }
+        }
+
+        [Fact]
+        public void Reset_PooledReuse_ProducesCorrectIntersectionResults()
+        {
+            // Simulate the real pooling pattern: Reset → TransformVertices → Intersects
+            var pooledA = new OrientedBoundingBox3D();
+            var pooledB = new OrientedBoundingBox3D();
+            var unitBox = new BoundingBox(new Vector3(-0.5f), new Vector3(0.5f));
+
+            // Round 1: overlapping
+            pooledA.Reset(unitBox);
+            pooledA.TransformVertices(Matrix.Identity);
+            pooledB.Reset(unitBox);
+            pooledB.TransformVertices(Matrix.CreateTranslation(0.5f, 0, 0));
+            Assert.True(pooledA.Intersects(pooledB));
+
+            // Round 2: separated — reuse same instances
+            pooledA.Reset(unitBox);
+            pooledA.TransformVertices(Matrix.Identity);
+            pooledB.Reset(unitBox);
+            pooledB.TransformVertices(Matrix.CreateTranslation(5f, 0, 0));
+            Assert.False(pooledA.Intersects(pooledB));
+        }
+
+        // ──────────────────────────────────────────────
+        //  26. Parameterless constructor
+        // ──────────────────────────────────────────────
+
+        [Fact]
+        public void ParameterlessConstructor_ThenReset_WorksCorrectly()
+        {
+            var obb = new OrientedBoundingBox3D();
+            var aabb = new BoundingBox(new Vector3(-2, -3, -4), new Vector3(2, 3, 4));
+            obb.Reset(aabb);
+
+            Vector3[] expected = aabb.GetCorners();
+            for (int i = 0; i < 8; i++)
+            {
+                Assert.Equal(expected[i], obb.Vertices[i]);
+            }
+        }
+
+        [Fact]
+        public void ParameterlessConstructor_ThenReset_IntersectsCorrectly()
+        {
+            var obb1 = new OrientedBoundingBox3D();
+            var obb2 = new OrientedBoundingBox3D();
+            var unitBox = new BoundingBox(new Vector3(-0.5f), new Vector3(0.5f));
+
+            obb1.Reset(unitBox);
+            obb2.Reset(unitBox);
+            Assert.True(obb1.Intersects(obb2));
+        }
+
+        // ──────────────────────────────────────────────
+        //  27. Non-uniform scale + rotation
+        // ──────────────────────────────────────────────
+
+        [Fact]
+        public void Intersects_NonUniformScaleWithRotation_Overlapping_ReturnsTrue()
+        {
+            // Long thin box along X, rotated 45° about Z → forms a diagonal slab through origin
+            var a = MakeTransformedObb(
+                Matrix.CreateScale(4f, 0.5f, 0.5f) *
+                Matrix.CreateRotationZ(MathHelper.PiOver4));
+            // Another long thin box along Y → also passes through origin
+            var b = MakeTransformedObb(Matrix.CreateScale(0.5f, 4f, 0.5f));
+            Assert.True(a.Intersects(b));
+        }
+
+        [Fact]
+        public void Intersects_NonUniformScaleWithRotation_Separated_ReturnsFalse()
+        {
+            // Long thin box along X rotated 45° and shifted out of the way
+            var a = MakeTransformedObb(
+                Matrix.CreateScale(4f, 0.5f, 0.5f) *
+                Matrix.CreateRotationZ(MathHelper.PiOver4) *
+                Matrix.CreateTranslation(10f, 10f, 0));
+            var b = MakeTransformedObb(Matrix.CreateScale(0.5f, 4f, 0.5f));
+            Assert.False(a.Intersects(b));
+        }
+
+        // ──────────────────────────────────────────────
+        //  28. Stress: randomized Reset + Transform pooling
+        // ──────────────────────────────────────────────
+
+        [Fact]
+        public void Reset_ManyRounds_AlwaysProducesSymmetricResults()
+        {
+            var pooledA = new OrientedBoundingBox3D();
+            var pooledB = new OrientedBoundingBox3D();
+            var unitBox = new BoundingBox(new Vector3(-0.5f), new Vector3(0.5f));
+            var rng = new Random(123);
+
+            for (int round = 0; round < 50; round++)
+            {
+                float rx = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                float ry = (float)(rng.NextDouble() * MathHelper.TwoPi);
+                float tx = (float)(rng.NextDouble() * 4 - 2);
+
+                pooledA.Reset(unitBox);
+                pooledA.TransformVertices(
+                    Matrix.CreateFromYawPitchRoll(ry, rx, 0) *
+                    Matrix.CreateTranslation(tx, 0, 0));
+
+                pooledB.Reset(unitBox);
+                pooledB.TransformVertices(
+                    Matrix.CreateFromYawPitchRoll(rx, ry, 0) *
+                    Matrix.CreateTranslation(-tx, 0, 0));
+
+                bool ab = pooledA.Intersects(pooledB);
+                bool ba = pooledB.Intersects(pooledA);
+                Assert.Equal(ab, ba);
+            }
+        }
+
+        // ──────────────────────────────────────────────
         //  Assertion helpers
         // ──────────────────────────────────────────────
 

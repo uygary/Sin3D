@@ -4,3 +4,4 @@ SampleProjects/Sin3D_Planetarium/bin/
 **/obj/
 **/bin/
 **/.vs/
+*.user
