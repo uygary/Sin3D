@@ -11,6 +11,7 @@ public class Renderer3D
 {
     private readonly GraphicsDevice _graphicsDevice;
     private readonly bool _useCrr;
+    private readonly bool _cull;
 
     private float _effectAlpha;
     /// <summary>
@@ -83,10 +84,12 @@ public class Renderer3D
     /// </summary>
     /// <param name="graphicsDevice">The graphics device that the renderer will target.</param>
     /// <param name="useCrr">Whether to use the camera-relative rendering projection matrix.</param>
-    public Renderer3D(GraphicsDevice graphicsDevice, bool useCrr)
+    /// <param name="cull">Whether to cull meshes out of the Camera3d frustum bounds.</param>
+    public Renderer3D(GraphicsDevice graphicsDevice, bool useCrr, bool cull)
     {
         _graphicsDevice = graphicsDevice;
         _useCrr = useCrr;
+        _cull = cull;
         ResetRenderingSettings();
     }
 
@@ -139,6 +142,20 @@ public class Renderer3D
         for (int i = 0; i < model.BaseModel.Meshes.Count; i++)
         {
             ModelMesh mesh = model.BaseModel.Meshes[i];
+
+            if (_cull)
+            {
+                var localSphere = mesh.BoundingSphere;
+                var worldScaleAndPos = model.WorldMatrix;
+                localSphere.Transform(ref worldScaleAndPos, out var worldSphere);
+                
+                camera.Frustum.Contains(ref worldSphere, out ContainmentType containment);
+                if (containment == ContainmentType.Disjoint)
+                {
+                    continue;
+                }
+            }
+
             for (int j = 0; j < mesh.Effects.Count; j++)
             {
                 BasicEffect effect = (BasicEffect)mesh.Effects[j];
@@ -283,6 +300,19 @@ public class Renderer3D
         for (int i = 0; i < model.BaseModel.Meshes.Count; i++)
         {
             ModelMesh mesh = model.BaseModel.Meshes[i];
+
+            if (_cull)
+            {
+                var localSphere = mesh.BoundingSphere;
+                var worldScaleAndPos = model.WorldMatrix;
+                localSphere.Transform(ref worldScaleAndPos, out var worldSphere);
+                
+                camera.Frustum.Contains(ref worldSphere, out var containmentType);
+                if (containmentType == ContainmentType.Disjoint)
+                {
+                    continue;
+                }
+            }
 
             // Compute CRR-adjusted world matrix
             Matrix world;

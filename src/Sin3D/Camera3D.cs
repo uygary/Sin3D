@@ -12,29 +12,25 @@ public class Camera3d
     /// <summary>
     /// The (x, y, z) position.
     /// </summary>
-    public Vector3 Position { get => _position; set => _position = value;
-    } 
+    public Vector3 Position { get => _position; set => _position = value; } 
 
     private float _yaw;
     /// <summary>
     /// The yaw (in radians).
     /// </summary>
-    public float Yaw { get => _yaw; set => _yaw = value;
-    }
+    public float Yaw { get => _yaw; set => _yaw = value; }
 
     private float _pitch;
     /// <summary>
     /// The pitch (in radians).
     /// </summary>
-    public float Pitch { get => _pitch; set => _pitch = value;
-    }
+    public float Pitch { get => _pitch; set => _pitch = value; }
 
     private float _roll;
     /// <summary>
     /// The roll (in radians).
     /// </summary>
-    public float Roll { get => _roll; set => _roll = value;
-    }
+    public float Roll { get => _roll; set => _roll = value; }
 
     private float _fov;
     /// <summary>
@@ -57,15 +53,13 @@ public class Camera3d
     /// <summary>
     /// The near plane render distance (very small values could impact depth buffer precision).
     /// </summary>
-    public float NearPlaneDist { get => _nearPlaneDist; set => _nearPlaneDist = value;
-    }
+    public float NearPlaneDist { get => _nearPlaneDist; set => _nearPlaneDist = value; }
 
     private float _farPlaneDist;
     /// <summary>
     /// The far plane render distance.
     /// </summary>
-    public float FarPlaneDist { get => _farPlaneDist; set => _farPlaneDist = value;
-    }
+    public float FarPlaneDist { get => _farPlaneDist; set => _farPlaneDist = value; }
 
     private Matrix _viewMatrix;
     /// <summary>
@@ -78,6 +72,12 @@ public class Camera3d
     /// The projection matrix.
     /// </summary>
     public Matrix ProjectionMatrix => _projectionMatrix;
+
+    /// <summary>
+    /// The camera's viewing frustum.
+    /// Used for culling out-of-bounds objects to increase FPS.
+    /// </summary>
+    public BoundingFrustum Frustum { get; } = new(Matrix.Identity);
 
     /// <summary>
     /// Creates a new <see cref="Camera3d"/> object with position, rotation, fov and near/far plane render distance settings.
@@ -103,6 +103,7 @@ public class Camera3d
         //setting up the view and projection matrices
         UpdateViewMatrix();
         _projectionMatrix = Matrix.CreatePerspectiveFieldOfView(fov, graphicsDevice.Viewport.AspectRatio, nearPlaneDist, farPlaneDist);
+        UpdateFrustum();
     }
 
     /// <summary>
@@ -122,6 +123,7 @@ public class Camera3d
         Vector3 target = direction + shiftedPosition;
 
         _viewMatrix = Matrix.CreateLookAt(shiftedPosition, target, Vector3.Up);
+        UpdateFrustum();
     }
 
     /// <summary>
@@ -131,6 +133,7 @@ public class Camera3d
     public void SetProjection(Matrix projection)
     {
         _projectionMatrix = projection;
+        UpdateFrustum();
     }
 
     /// <summary>
@@ -140,6 +143,7 @@ public class Camera3d
     public void SetViewMatrix(Matrix viewMatrix)
     {
         _viewMatrix = viewMatrix;
+        UpdateFrustum();
     }
 
     /// <summary>
@@ -149,5 +153,13 @@ public class Camera3d
     public void UpdateProjectionMatrix(GraphicsDevice graphicsDevice)
     {
         _projectionMatrix = Matrix.CreatePerspectiveFieldOfView(_fov, graphicsDevice.Viewport.AspectRatio, _nearPlaneDist, _farPlaneDist);
+        UpdateFrustum();
+    }
+
+    private void UpdateFrustum()
+    {
+        // Internal BoundingFrustum bounds are rebuilt without allocating new objects 
+        // whenever the 'Matrix' property setter is invoked.
+        Frustum.Matrix = _viewMatrix * _projectionMatrix;
     }
 }
