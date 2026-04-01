@@ -221,16 +221,50 @@ public class Renderer3D
     }
 
     /// <summary>
-    /// Draws a Model3D using a custom effect. Handles World/View/Projection setup (with CRR support),
-    /// material properties, scene lighting, and texture binding.
-    /// An optional callback can be provided to configure the effect per mesh part
-    /// (e.g., selecting a technique based on vertex declaration).
+    /// Pre-configures scene-wide parameters on a custom effect before a batch of DrawModel3D calls.
+    /// Sets View, Projection, and scene lighting so they are not redundantly re-set per object.
+    /// </summary>
+    /// <param name="effect">The custom effect to configure.</param>
+    /// <param name="camera">The camera providing View and Projection matrices.</param>
+    /// <remarks>Call this once per frame, or per eye pass in the case of VR, before drawing multiple objects with the same effect.</remarks>
+    public void PrepareEffect(Effect effect, Camera3d camera)
+    {
+        // View matrix (with CRR translation cleared if enabled)
+        var view = camera.ViewMatrix;
+        if (_useCrr)
+        {
+            view.M41 = 0;
+            view.M42 = 0;
+            view.M43 = 0;
+        }
+
+        effect.Parameters["View"]?.SetValue(view);
+        effect.Parameters["Projection"]?.SetValue(camera.ProjectionMatrix);
+
+        // Scene lighting.
+        // (Identical for all objects in this pass.)
+        effect.Parameters["AmbientLightColor"]?.SetValue(_ambientLightColor);
+        if (_directionalLight0.Enabled)
+        {
+            effect.Parameters["DirLight0Direction"]?.SetValue(_directionalLight0.Direction);
+            effect.Parameters["DirLight0Color"]?.SetValue(_directionalLight0.DiffuseColor);
+        }
+        else
+        {
+            effect.Parameters["DirLight0Color"]?.SetValue(Vector3.Zero);
+        }
+    }
+
+    /// <summary>
+    /// Draws a Model3D using a custom effect. Only sets per-object parameters (World, material, texture).
+    /// Scene-wide parameters (View, Projection, lighting) must be set beforehand via
+    /// <see cref="PrepareEffect"/> to avoid redundant uniform buffer uploads.
     /// </summary>
     /// <param name="model">The model that will be drawn.</param>
-    /// <param name="camera">The camera viewpoint.</param>
+    /// <param name="camera">The camera viewpoint. (Used for CRR world matrix computation.)</param>
     /// <param name="effect">The custom effect to apply.</param>
     /// <param name="configurePart">Optional per-mesh-part configuration callback.</param>
-    /// <remarks>configurePart is used for things like technique selection.</remarks> 
+    /// <remarks><c>configurePart</c> is used for things like technique selection.</remarks> 
     public void DrawModel3D(Model3D model,
         Camera3d camera,
         Effect effect,
@@ -250,49 +284,26 @@ public class Renderer3D
         {
             ModelMesh mesh = model.BaseModel.Meshes[i];
 
-            // Compute world/view matrices with CRR support
+            // Compute CRR-adjusted world matrix
             Matrix world;
-            Matrix view;
-
             if (_useCrr)
             {
-                // Perform CRR translation
-                Vector3 translation = -camera.Position;
-                Matrix.CreateTranslation(in translation, out Matrix translationMatrix);
-                Matrix worldMatrix = model.WorldMatrix;
+                var translation = -camera.Position;
+                Matrix.CreateTranslation(in translation, out var translationMatrix);
+                var worldMatrix = model.WorldMatrix;
                 Matrix.Multiply(in worldMatrix, in translationMatrix, out world);
-                view = camera.ViewMatrix;
-
-                //Clear the translation
-                view.M41 = 0;
-                view.M42 = 0;
-                view.M43 = 0;
             }
             else
             {
                 world = model.WorldMatrix;
-                view = camera.ViewMatrix;
             }
 
-            // Set shared parameters
+            // Per-object parameters only!
+            // (Scene constants are set via PrepareEffect.)
             effect.Parameters["World"]?.SetValue(world);
-            effect.Parameters["View"]?.SetValue(view);
-            effect.Parameters["Projection"]?.SetValue(camera.ProjectionMatrix);
             effect.Parameters["DiffuseColor"]?.SetValue(model.DiffuseColor);
             effect.Parameters["EmissiveColor"]?.SetValue(model.EmissiveColor);
             effect.Parameters["Alpha"]?.SetValue(_effectAlpha);
-
-            // Scene lighting
-            effect.Parameters["AmbientLightColor"]?.SetValue(_ambientLightColor);
-            if (_directionalLight0.Enabled)
-            {
-                effect.Parameters["DirLight0Direction"]?.SetValue(_directionalLight0.Direction);
-                effect.Parameters["DirLight0Color"]?.SetValue(_directionalLight0.DiffuseColor);
-            }
-            else
-            {
-                effect.Parameters["DirLight0Color"]?.SetValue(Vector3.Zero);
-            }
 
             // Texture
             if (model.MeshTextures is not null && i < model.MeshTextures.Count)
@@ -300,14 +311,33 @@ public class Renderer3D
                 effect.Parameters["Texture"]?.SetValue(model.MeshTextures[i]);
             }
 
-            // Configure and assign effect to each mesh part
+            // Draw each part manually so we can use a single shared Effect instance
+            // and swap techniques per part without state corruption.
             foreach (ModelMeshPart part in mesh.MeshParts)
             {
                 configurePart?.Invoke(effect, part);
-                part.Effect = effect;
-            }
 
-            mesh.Draw();
+                _graphicsDevice.SetVertexBuffer(part.VertexBuffer);
+                _graphicsDevice.Indices = part.IndexBuffer;
+
+                // We manually iterate and draw parts instead of using mesh.Draw() because:
+                // 1. mesh.Draw() forces the engine to statically re-bind and re-upload View, Projection
+                //  and other overarching global EffectParameters internally for every single mesh part.
+                // 2. By separating PrepareEffect (scene-level constants) from DrawModel3D (object-level constants),
+                //  we cache the heavy matrices in the Vulkan uniform ring buffer exactly once per frame/pass.
+                //  This potentially bypasses hundreds of thousands of redundant managed C# parameter evaluations and memory 
+                //  copies per second for crowded scenes, saving up CPU cycles and reducing GC pressure.
+                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    _graphicsDevice.DrawIndexedPrimitives(
+                        PrimitiveType.TriangleList,
+                        part.VertexOffset,
+                        part.StartIndex,
+                        part.PrimitiveCount
+                    );
+                }
+            }
         }
     }
 }
