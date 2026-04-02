@@ -80,6 +80,17 @@ public class Camera3d
     public BoundingFrustum Frustum { get; } = new(Matrix.Identity);
 
     /// <summary>
+    /// Returns a <see cref="Transform3D"/> synthesized from the camera's current position and Euler angles.
+    /// </summary>
+    /// <remarks>
+    /// This is a read-only snapshot. Camera3d stores Euler angles internally (for FPS-style
+    /// incremental control), so modifying the returned struct has no effect on the camera.
+    /// To update the camera, set <see cref="Position"/>, <see cref="Yaw"/>, <see cref="Pitch"/>,
+    /// <see cref="Roll"/> directly and call <see cref="UpdateViewMatrix"/>.
+    /// </remarks>
+    public Transform3D Transform => Transform3D.FromYawPitchRoll(_position, _yaw, _pitch, _roll);
+
+    /// <summary>
     /// Creates a new <see cref="Camera3d"/> object with position, rotation, fov and near/far plane render distance settings.
     /// </summary>
     /// <param name="position">The initial (x, y, z) position.</param>

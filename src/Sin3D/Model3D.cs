@@ -10,23 +10,14 @@ namespace Sin3d;
 /// </summary>
 public class Model3D
 {
-    private Vector3 _position;
-    /// <summary>
-    /// The (x, y, z) position of the model.
-    /// </summary>
-    public Vector3 Position { get => _position; set => _position = value; }
+    private Transform3D _transform;
 
-    private Quaternion _rotation;
     /// <summary>
-    /// The quaternion rotation of the model.
+    /// The spatial transform (position, rotation, scale) of the model.
+    /// Changes are NOT automatically reflected in <see cref="WorldMatrix"/>;
+    /// call <see cref="UpdateWorldMatrix"/> after modifying.
     /// </summary>
-    public Quaternion Rotation { get => _rotation; set => _rotation = value; }
-
-    private float _scale;
-    /// <summary>
-    /// The scale of the model.
-    /// </summary>
-    public float Scale { get => _scale; set => _scale = value; }
+    public ref Transform3D Transform => ref _transform;
 
     private readonly Model _baseModel;
     /// <summary>
@@ -57,9 +48,10 @@ public class Model3D
     /// The model's world matrix.
     /// </summary>
     /// <remarks>
-    /// This should ideally be a readonly property that is only updated through the UpdateWorldMatrix method,
-    /// but we made it settable to handle virtual models in VR based on updates provided by OpenXR.
-    /// TODO: I think we need a better way of handling that.
+    /// Normally derived from <see cref="Transform"/> via <see cref="UpdateWorldMatrix"/>.
+    /// The setter is exposed to handle VR models whose world matrix is provided directly by OpenXR.
+    /// After setting this directly, Transform will become invalid until it's re-synced.
+    /// This means the Position, Rotation and Scale of the model will be stale.
     /// </remarks>
     public Matrix WorldMatrix { get => _worldMatrix; set => _worldMatrix = value; }
 
@@ -83,35 +75,54 @@ public class Model3D
     #endregion Per-frame scratch buffers
 
     /// <summary>
-    /// Creates a new <see cref="Model3D"/> object with position, rotation, and scale settings.
+    /// Creates a new <see cref="Model3D"/> object with the given position, rotation, and scale settings.
     /// </summary>
     /// <param name="position">The initial (x, y, z) position.</param>
     /// <param name="rotation">The initial quaternion rotation.</param>
     /// <param name="scale">The initial scale.</param>
     /// <param name="baseModel">The imported model.</param>
+    [Obsolete("Use the overload that takes in a Transform3D.")]
     public Model3D(Vector3 position, Quaternion rotation, float scale, Model baseModel)
+        : this(new Transform3D(position, rotation, scale), baseModel)
     {
-        _position = position;
-        _rotation = rotation;
-        _scale = scale;
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="Model3D"/> object with the given position, rotation, scale and texture settings.
+    /// </summary>
+    /// <param name="position">The initial (x, y, z) position.</param>
+    /// <param name="rotation">The initial quaternion rotation.</param>
+    /// <param name="scale">The initial scale.</param>
+    /// <param name="baseModel">The imported model.</param>
+    /// <param name="meshTextures">The initial list of textures that will be mapped to the model's meshes.</param>
+    [Obsolete("Use the overload that takes in a Transform3D.")]
+    public Model3D(Vector3 position, Quaternion rotation, float scale, Model baseModel, List<Texture2D?> meshTextures)
+        : this (new Transform3D(position, rotation, scale), baseModel, meshTextures)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="Model3D"/> object with the given transform.
+    /// </summary>
+    /// <param name="transform">Transform containing the models position, rotation and scale.</param>
+    /// <param name="baseModel">The imported model.</param>
+    public Model3D(Transform3D transform, Model baseModel)
+    {
+        _transform = transform;
         _baseModel = baseModel;
 
         UpdateWorldMatrix();
     }
 
     /// <summary>
-    /// Creates a new <see cref="Model3D"/> object with position, rotation, scale and texture settings.
+    /// Creates a new <see cref="Model3D"/> object with the given transform and texture settings.
     /// </summary>
-    /// <param name="position">The initial (x, y, z) position.</param>
-    /// <param name="rotation">The initial quaternion rotation.</param>
-    /// <param name="scale">The initial scale.</param>
+    /// <param name="transform">Transform containing the models position, rotation and scale.</param>
     /// <param name="baseModel">The imported model.</param>
     /// <param name="meshTextures">The initial list of textures that will be mapped to the model's meshes.</param> 
-    public Model3D(Vector3 position, Quaternion rotation, float scale, Model baseModel, List<Texture2D?> meshTextures)
+    public Model3D(Transform3D transform, Model baseModel, List<Texture2D?> meshTextures)
     {
-        _position = position;
-        _rotation = rotation;
-        _scale = scale;
+        _transform = transform;
         _baseModel = baseModel;
         _meshTextures = meshTextures;
 
@@ -123,11 +134,7 @@ public class Model3D
     /// </summary>
     public void UpdateWorldMatrix()
     {
-        Matrix.CreateScale(_scale, out Matrix scaleMatrix);
-        Matrix.CreateFromQuaternion(in _rotation, out Matrix rotationMatrix);
-        Matrix.Multiply(in scaleMatrix, in rotationMatrix, out Matrix srMatrix);
-        Matrix.CreateTranslation(in _position, out Matrix translationMatrix);
-        Matrix.Multiply(in srMatrix, in translationMatrix, out _worldMatrix);
+        _transform.ToWorldMatrix(out _worldMatrix);
     }
 
     #region Collision Detection
@@ -294,8 +301,12 @@ public class Model3D
     /// <param name="worldMatrix">The world matrix to transform vertices by.</param>
     /// <returns>An array of world-space triangles.</returns>
     /// <remarks>
-    /// This is a load-time utility. It allocates freely and should NOT be called per-frame.
-    /// Used for building terrain height samplers from map geometry.
+    /// This is a helper designed to be used on load-time, or sparingly.
+    /// It allocates freely and should NOT be called per-frame.
+    /// <para>
+    /// Used for building terrain height samplers from map geometry, or similar cases.
+    /// It is obviously very, very high-cost.
+    /// </para>
     /// </remarks>
     public Triangle3[] ExtractTransformedTriangles(in Matrix worldMatrix)
     {
@@ -316,9 +327,13 @@ public class Model3D
                     vertices, 0, part.NumVertices, stride);
 
                 // Extract indices
-                int indexElementSize = part.IndexBuffer.IndexElementSize == IndexElementSize.SixteenBits ? 2 : 4;
-                int indexCount = part.PrimitiveCount * 3;
-                int[] indices = new int[indexCount];
+                var indexElementSize =
+                    part.IndexBuffer.IndexElementSize == IndexElementSize.SixteenBits
+                        ? 2
+                        : 4;
+
+                var indexCount = part.PrimitiveCount * 3;
+                var indices = new int[indexCount];
 
                 if (indexElementSize == 2)
                 {
@@ -326,6 +341,7 @@ public class Model3D
                     part.IndexBuffer.GetData(
                         part.StartIndex * 2,
                         shortIndices, 0, indexCount);
+
                     for (int i = 0; i < indexCount; i++)
                     {
                         indices[i] = shortIndices[i];
@@ -341,9 +357,10 @@ public class Model3D
                 // Build triangles, transformed into world space
                 for (int i = 0; i < indexCount; i += 3)
                 {
-                    Vector3 v0 = Vector3.Transform(vertices[indices[i]].Position, worldMatrix);
-                    Vector3 v1 = Vector3.Transform(vertices[indices[i + 1]].Position, worldMatrix);
-                    Vector3 v2 = Vector3.Transform(vertices[indices[i + 2]].Position, worldMatrix);
+                    Vector3.Transform(in vertices[indices[i]].Position, in worldMatrix, out var v0);
+                    Vector3.Transform(in vertices[indices[i + 1]].Position, in worldMatrix, out var v1);
+                    Vector3.Transform(in vertices[indices[i + 2]].Position, in worldMatrix, out var v2);
+
                     triangles.Add(new Triangle3(v0, v1, v2));
                 }
             }

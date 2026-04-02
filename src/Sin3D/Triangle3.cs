@@ -99,6 +99,9 @@ public readonly struct Triangle3(Vector3 v0, Vector3 v1, Vector3 v2) : IEquatabl
     public static bool operator !=(Triangle3 left, Triangle3 right) =>
         !left.Equals(right);
 
+    public override string ToString() =>
+        $"{nameof(Triangle3)}(V0={V0}, V1={V1}, V2={V2})";
+
     internal string DebugDisplayString =>
         $"{(object)V0}  {(object)V1}  {(object)V2}";
 }

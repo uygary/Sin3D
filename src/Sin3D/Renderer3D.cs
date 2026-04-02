@@ -343,8 +343,10 @@ public class Renderer3D
 
             // Draw each part manually so we can use a single shared Effect instance
             // and swap techniques per part without state corruption.
-            foreach (ModelMeshPart part in mesh.MeshParts)
+            var meshPartCount = mesh.MeshParts.Count;
+            for(var mpi = 0; mpi < meshPartCount; mpi++)
             {
+                var part = mesh.MeshParts[mpi];
                 configurePart?.Invoke(effect, part);
 
                 _graphicsDevice.SetVertexBuffer(part.VertexBuffer);
@@ -357,8 +359,10 @@ public class Renderer3D
                 //  we cache the heavy matrices in the Vulkan uniform ring buffer exactly once per frame/pass.
                 //  This potentially bypasses hundreds of thousands of redundant managed C# parameter evaluations and memory 
                 //  copies per second for crowded scenes, saving up CPU cycles and reducing GC pressure.
-                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+                var passCount = effect.CurrentTechnique.Passes.Count;
+                for (var pi = 0; pi < passCount; pi++)
                 {
+                    var pass = effect.CurrentTechnique.Passes[pi];
                     pass.Apply();
                     _graphicsDevice.DrawIndexedPrimitives(
                         PrimitiveType.TriangleList,

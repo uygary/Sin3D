@@ -38,4 +38,21 @@ public static class MatrixSimdExtensions
             result = Unsafe.As<SN.Matrix4x4, Matrix>(ref simMat);
         }
     }
+
+    extension(in Matrix matrix)
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool ReadOnlyDecompose(out Vector3 scale, out Quaternion rotation, out Vector3 translation)
+        {
+            ref SN.Matrix4x4 snMatrix = ref Unsafe.As<Matrix, SN.Matrix4x4>(ref Unsafe.AsRef(in matrix));
+
+            var success = SN.Matrix4x4.Decompose(snMatrix, out SN.Vector3 snScale, out SN.Quaternion snRotation, out SN.Vector3 snTranslation);
+
+            scale = Unsafe.As<SN.Vector3, Vector3>(ref snScale);
+            rotation = Unsafe.As<SN.Quaternion, Quaternion>(ref snRotation);
+            translation = Unsafe.As<SN.Vector3, Vector3>(ref snTranslation);
+
+            return success;
+        }
+    }
 }
