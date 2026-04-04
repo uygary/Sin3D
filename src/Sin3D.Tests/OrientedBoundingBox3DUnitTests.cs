@@ -1,5 +1,5 @@
 using Microsoft.Xna.Framework;
-using Sin3d;
+using Sin3D;
 
 namespace Sin3D.Tests
 {

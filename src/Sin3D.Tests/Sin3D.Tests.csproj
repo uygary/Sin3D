@@ -18,7 +18,7 @@
     <PackageReference Include="MonoGame.Framework.Native" Version="3.8.5-preview.*">
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
-    <ProjectReference Include="..\Sin3d\Sin3D.csproj" />
+    <ProjectReference Include="..\Sin3D\Sin3D.csproj" />
   </ItemGroup>
 
   <ItemGroup>
