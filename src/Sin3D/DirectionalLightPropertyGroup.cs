@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A group of properties for a directional light - used to set the DirectionalLight fields of a <see cref="Renderer3D"/> object.

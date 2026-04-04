@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// Abstracts how the rendered scene is presented to the user.

@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// Display provider for desktop (flat screen) rendering.

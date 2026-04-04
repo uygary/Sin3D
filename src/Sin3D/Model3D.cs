@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Sin3d.Extensions;
-using Sin3d.Extensions.Simd;
+using Sin3D.Extensions;
+using Sin3D.Extensions.Simd;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A 3D model class for handling position, rotation, scale and collision detection.

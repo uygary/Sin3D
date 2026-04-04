@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A named render layer wrapping a <see cref="RenderTarget2D"/> with metadata

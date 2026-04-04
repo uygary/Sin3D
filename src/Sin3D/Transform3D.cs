@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
-using Sin3d.Extensions.Simd;
+using Sin3D.Extensions.Simd;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A shared spatial transform representing position, rotation and uniform scale.
@@ -14,7 +14,7 @@ namespace Sin3d;
 /// <remarks>
 /// <para>
 /// This struct is the single authoritative representation of an object's spatial state
-/// within Sin3D. Both <see cref="Model3D"/> and <see cref="Camera3d"/> expose it so that
+/// within Sin3D. Both <see cref="Model3D"/> and <see cref="Camera3D"/> expose it so that
 /// game code can read/write transform data through a unified type.
 /// </para>
 /// <para>
@@ -100,9 +100,9 @@ public struct Transform3D
 
         // Use the average of the three scale axes as the uniform scale.
         // For uniform matrices this is exact; for non-uniform it's a best-effort average.
-        // TODO: Do OpenXR grip poses etc. or anything that comes out of OpenXR have non-uniform scaling? Is that a thing?
+        // TODO: Do OpenXR grip poses etc. or anything that comes out of OpenXR have non-uniform scaling? Is that a thing?:
         // Maybe we need a separate Transform3D type that supports non-uniform scale?
-        // TODO: Do we have a use-case for it ourselves? Is it even worth it?
+        // TODO: Do we have a use-case for it ourselves? Is it even worth it?:
         // Like a spaceship flying through a wormhole or flying by a black hole?
         // Or the spacetime distortions around an Alcubierre drive?
         float uniformScale = (scale.X + scale.Y + scale.Z) / 3f;
@@ -163,7 +163,7 @@ public struct Transform3D
     /// </summary>
     /// <remarks>
     /// Euler extraction from a quaternion is inherently lossy near gimbal lock, so this is non-canonical.
-    /// For FPS camera controls, prefer storing Euler angles directly (as <see cref="Camera3d"/> does).
+    /// For FPS camera controls, prefer storing Euler angles directly (as <see cref="Camera3D"/> does).
     /// </remarks>
     public readonly void GetYawPitchRoll(out float yaw, out float pitch, out float roll)
     {

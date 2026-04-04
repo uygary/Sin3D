@@ -1,12 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A 3D camera class that handles view and projection matrices.
 /// </summary>
-public class Camera3d
+public class Camera3D
 {
     private Vector3 _position;
     /// <summary>
@@ -91,7 +91,7 @@ public class Camera3d
     public Transform3D Transform => Transform3D.FromYawPitchRoll(_position, _yaw, _pitch, _roll);
 
     /// <summary>
-    /// Creates a new <see cref="Camera3d"/> object with position, rotation, fov and near/far plane render distance settings.
+    /// Creates a new <see cref="Camera3D"/> object with position, rotation, fov and near/far plane render distance settings.
     /// </summary>
     /// <param name="position">The initial (x, y, z) position.</param>
     /// <param name="rotation">The initial (yaw, pitch, roll) rotation.</param>
@@ -99,7 +99,7 @@ public class Camera3d
     /// <param name="nearPlaneDist">The initial near plane render distance.</param>
     /// <param name="farPlaneDist">The initial far plane render distance.</param>
     /// <param name="graphicsDevice">The graphics device, used in creating the projection matrix.</param>
-    public Camera3d(Vector3 position, Vector3 rotation, float fov, float nearPlaneDist, float farPlaneDist, GraphicsDevice graphicsDevice)
+    public Camera3D(Vector3 position, Vector3 rotation, float fov, float nearPlaneDist, float farPlaneDist, GraphicsDevice graphicsDevice)
     {
         _position = position;
 

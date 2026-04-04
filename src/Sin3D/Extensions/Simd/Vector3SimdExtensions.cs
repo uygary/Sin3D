@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using System.Runtime.CompilerServices;
 using SN = System.Numerics;
 
-namespace Sin3d.Extensions.Simd;
+namespace Sin3D.Extensions.Simd;
 
 public static class Vector3SimdExtensions
 {

@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Sin3d.Extensions.Simd;
+using Sin3D.Extensions.Simd;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A 3D renderer class used for drawing <see cref="Model3D"/> objects and handling ambient lighting, directional lighting and fog.
@@ -13,6 +13,10 @@ public class Renderer3D
     private readonly bool _useCrr;
     private readonly bool _cull;
 
+    // TODO: I really wanna clean these backing fields up and replace them with auto-properties:
+    // But don't wanna pay the perf penalty of JIT replacing them with backing fields:
+    // I also don't wanna have to AOT compile:
+    // Maybe create a reliable benchmark suite and test the perf difference to see if it's really significant at all?
     private float _effectAlpha;
     /// <summary>
     /// The alpha value that will be used in rendering.
@@ -125,7 +129,7 @@ public class Renderer3D
     /// </summary>
     /// <param name="model">The model that will be drawn.</param>
     /// <param name="camera">The camera that will be used as the viewpoint from which to draw from.</param>
-    public void DrawModel3D(Model3D model, Camera3d camera)
+    public void DrawModel3D(Model3D model, Camera3D camera)
     {
         //handling transparency
         _graphicsDevice.BlendState = BlendState.Opaque;
@@ -244,7 +248,7 @@ public class Renderer3D
     /// <param name="effect">The custom effect to configure.</param>
     /// <param name="camera">The camera providing View and Projection matrices.</param>
     /// <remarks>Call this once per frame, or per eye pass in the case of VR, before drawing multiple objects with the same effect.</remarks>
-    public void PrepareEffect(Effect effect, Camera3d camera)
+    public void PrepareEffect(Effect effect, Camera3D camera)
     {
         // View matrix (with CRR translation cleared if enabled)
         var view = camera.ViewMatrix;
@@ -283,7 +287,7 @@ public class Renderer3D
     /// <param name="configurePart">Optional per-mesh-part configuration callback.</param>
     /// <remarks><c>configurePart</c> is used for things like technique selection.</remarks> 
     public void DrawModel3D(Model3D model,
-        Camera3d camera,
+        Camera3D camera,
         Effect effect,
         Action<Effect, ModelMeshPart>? configurePart = null)
     {

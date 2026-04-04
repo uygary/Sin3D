@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
-using Sin3d.Extensions;
+using Sin3D.Extensions;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A 3D oriented bounding box used for SAT-based collision detection.

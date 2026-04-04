@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Sin3d;
+namespace Sin3D;
 
 /// <summary>
 /// A basic VR display provider that supports stereo rendering with two eyes.

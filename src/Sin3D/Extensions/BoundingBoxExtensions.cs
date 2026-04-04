@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace Sin3d.Extensions;
+namespace Sin3D.Extensions;
 
 public static class BoundingBoxExtensions
 {
