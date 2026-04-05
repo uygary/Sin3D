@@ -129,7 +129,17 @@ public class Renderer3D
     /// </summary>
     /// <param name="model">The model that will be drawn.</param>
     /// <param name="camera">The camera that will be used as the viewpoint from which to draw from.</param>
-    public void DrawModel3D(Model3D model, ICamera camera)
+    /// <remarks>
+    /// <para>
+    /// <c>TCamera</c> generic type argument is added to avoid vtable lookup, reliance on JIT devirt,
+    /// and also to have <see href="https://blog.stephencleary.com/2022/10/modern-csharp-techniques-3-generic-code-generation.html">compile-time monomorphization</see> in AOT builds.
+    /// </para>
+    /// <para>
+    /// This is likely useless micro-optimisation, but why not aim for perfection in the stupidest possible way? It's always fun to learn this shit.
+    /// </para>
+    /// </remarks>
+    public void DrawModel3D<TCamera>(Model3D model, TCamera camera)
+        where TCamera : ICamera
     {
         //handling transparency
         _graphicsDevice.BlendState = BlendState.Opaque;
@@ -248,7 +258,8 @@ public class Renderer3D
     /// <param name="effect">The custom effect to configure.</param>
     /// <param name="camera">The camera providing View and Projection matrices.</param>
     /// <remarks>Call this once per frame, or per eye pass in the case of VR, before drawing multiple objects with the same effect.</remarks>
-    public void PrepareEffect(Effect effect, ICamera camera)
+    public void PrepareEffect<TCamera>(Effect effect, TCamera camera)
+        where TCamera : ICamera
     {
         // View matrix (with CRR translation cleared if enabled)
         var view = camera.ViewMatrix;
@@ -286,10 +297,11 @@ public class Renderer3D
     /// <param name="effect">The custom effect to apply.</param>
     /// <param name="configurePart">Optional per-mesh-part configuration callback.</param>
     /// <remarks><c>configurePart</c> is used for things like technique selection.</remarks> 
-    public void DrawModel3D(Model3D model,
-        ICamera camera,
+    public void DrawModel3D<TCamera>(Model3D model,
+        TCamera camera,
         Effect effect,
         Action<Effect, ModelMeshPart>? configurePart = null)
+        where TCamera : ICamera
     {
         _graphicsDevice.BlendState = BlendState.Opaque;
         _graphicsDevice.DepthStencilState = DepthStencilState.Default;
