@@ -24,7 +24,7 @@ public readonly struct Triangle3(Vector3 v0, Vector3 v1, Vector3 v2) : IEquatabl
     public readonly Vector3 V0 = v0;
     /// <summary>Second vertex of the triangle (absolute world-space position).</summary>
     [DataMember]
-    public readonly Vector3 V1 = v1;
+    public readonly Vector3 V1 = v1;    //TODO: Should we make V1 and V2 relative instead? Would that make sense?
     /// <summary>Third vertex of the triangle (absolute world-space position).</summary>
     [DataMember]
     public readonly Vector3 V2 = v2;

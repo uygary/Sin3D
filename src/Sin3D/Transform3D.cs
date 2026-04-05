@@ -305,17 +305,17 @@ public struct Transform3D
     /// <summary>
     /// Interpolates between two transforms: Lerp for position/scale, Slerp for rotation.
     /// </summary>
-    /// <param name="a">The start transform.</param>
-    /// <param name="b">The end transform.</param>
-    /// <param name="t">The interpolation factor (0 = a, 1 = b).</param>
+    /// <param name="from">The start transform.</param>
+    /// <param name="to">The end transform.</param>
+    /// <param name="delta">The interpolation factor (0 = from, 1 = to).</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Transform3D Lerp(in Transform3D a, in Transform3D b, float t)
+    public static Transform3D Lerp(in Transform3D from, in Transform3D to, float delta)
     {
         // TODO: I was sure I added Lerp SIMD extension. Fix this.
         return new Transform3D(
-            Vector3.Lerp(a.Position, b.Position, t),
-            Quaternion.Lerp(a.Rotation, b.Rotation, t), // TODO: I think we should use Slerp here instead?
-            MathHelper.Lerp(a.Scale, b.Scale, t));
+            Vector3.Lerp(from.Position, to.Position, delta),
+            Quaternion.Slerp(from.Rotation, to.Rotation, delta), // TODO: I think we should use Slerp here, but double check.
+            MathHelper.Lerp(from.Scale, to.Scale, delta));
     }
 
     #endregion Interpolation
