@@ -6,7 +6,17 @@ namespace Sin3D;
 /// <summary>
 /// A 3D camera class that handles view and projection matrices.
 /// </summary>
-public class Camera3D
+/// <remarks>
+/// <para>
+/// This camera uses Euler angles (yaw, pitch, roll) for rotation,
+/// so it's suitable for FPS or RTS style games.
+/// But this also means it's prone to gimbal lock.
+/// </para>
+/// <para>
+/// If you need full 6DOF movement and want to avoid gimbal lock, use <see cref="Camera6Dof"/> instead.
+/// </para>
+/// </remarks>
+public class Camera3D : ICamera
 {
     private Vector3 _position;
     /// <summary>

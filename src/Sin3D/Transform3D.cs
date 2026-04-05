@@ -49,6 +49,14 @@ public struct Transform3D
     }
 
     /// <summary>
+    /// Creates a new <see cref="Transform3D"/> with the specified position and rotation.
+    /// </summary>
+    public Transform3D(Vector3 position, Quaternion rotation)
+        : this (position, rotation, 1.0f)
+    {
+    }
+
+    /// <summary>
     /// Creates a new <see cref="Transform3D"/> at the given position with identity rotation and unit scale.
     /// </summary>
     public Transform3D(Vector3 position)

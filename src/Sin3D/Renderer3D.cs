@@ -129,7 +129,7 @@ public class Renderer3D
     /// </summary>
     /// <param name="model">The model that will be drawn.</param>
     /// <param name="camera">The camera that will be used as the viewpoint from which to draw from.</param>
-    public void DrawModel3D(Model3D model, Camera3D camera)
+    public void DrawModel3D(Model3D model, ICamera camera)
     {
         //handling transparency
         _graphicsDevice.BlendState = BlendState.Opaque;
@@ -248,7 +248,7 @@ public class Renderer3D
     /// <param name="effect">The custom effect to configure.</param>
     /// <param name="camera">The camera providing View and Projection matrices.</param>
     /// <remarks>Call this once per frame, or per eye pass in the case of VR, before drawing multiple objects with the same effect.</remarks>
-    public void PrepareEffect(Effect effect, Camera3D camera)
+    public void PrepareEffect(Effect effect, ICamera camera)
     {
         // View matrix (with CRR translation cleared if enabled)
         var view = camera.ViewMatrix;
@@ -287,7 +287,7 @@ public class Renderer3D
     /// <param name="configurePart">Optional per-mesh-part configuration callback.</param>
     /// <remarks><c>configurePart</c> is used for things like technique selection.</remarks> 
     public void DrawModel3D(Model3D model,
-        Camera3D camera,
+        ICamera camera,
         Effect effect,
         Action<Effect, ModelMeshPart>? configurePart = null)
     {
