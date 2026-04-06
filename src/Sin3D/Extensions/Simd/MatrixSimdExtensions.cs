@@ -37,6 +37,15 @@ public static class MatrixSimdExtensions
             );
             result = Unsafe.As<SN.Matrix4x4, Matrix>(ref simMat);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Invert(in Matrix matrix, out Matrix result)
+        {
+            // Cast strictly without allocations straight into hardware accelerated System.Numerics
+            ref SN.Matrix4x4 snm = ref Unsafe.As<Matrix, SN.Matrix4x4>(ref Unsafe.AsRef(in matrix));
+            SN.Matrix4x4.Invert(snm, out var snr);
+            result = Unsafe.As<SN.Matrix4x4, Matrix>(ref snr);
+        }
     }
 
     extension(in Matrix matrix)

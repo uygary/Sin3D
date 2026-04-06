@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Runtime.CompilerServices;
+using Sin3D.Extensions.Simd;
 
 namespace Sin3D;
 
@@ -223,6 +224,13 @@ public class Camera6Dof : ICamera
         _viewMatrix = viewMatrix;
 
         UpdateFrustum();
+
+        // Ensure the camera's internal position stays synced for Camera Relative Rendering (CRR)
+        // by extracting translation from the inverted view matrix.
+        // TODO: Should we pass CRR flag into the cameras instead and only do this when CRR is enabled?:
+        // Or is it better to always keep the position updated regardless?
+        Matrix.Invert(in viewMatrix, out Matrix inverseView);
+        Position = inverseView.Translation;
     }
 
     #endregion View Matrix
