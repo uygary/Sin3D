@@ -324,7 +324,10 @@ public class Model3D
                 var vertices = new VertexPositionNormalTexture[part.NumVertices];
                 part.VertexBuffer.GetData(
                     part.VertexOffset * stride,
-                    vertices, 0, part.NumVertices, stride);
+                    vertices,
+                    0,
+                    part.NumVertices,
+                    stride);
 
                 // Extract indices
                 var indexElementSize =

@@ -106,6 +106,9 @@ public class Renderer3D
         _graphicsDevice.BlendState = BlendState.Opaque;
         _graphicsDevice.DepthStencilState = DepthStencilState.Default;
 
+        // This is to fix an issue where rasterizer state is not reset before 2nd eye target in VR.
+        _graphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+
         //resetting light fields
         _effectAlpha = 1f;
         _defaultLightingEnabled = false;

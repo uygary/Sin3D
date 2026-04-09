@@ -44,7 +44,12 @@ public class RenderLayer
         Name = name;
         LayerType = layerType;
         DrawOrder = drawOrder;
-        Target = new RenderTarget2D(graphicsDevice, width, height, false,
-            SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
+        Target = new RenderTarget2D(graphicsDevice,
+            width,
+            height,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.Depth24Stencil8); // TODO: Find and fix the bug in the native DX12 backend!
+            //DepthFormat.Depth24);
     }
 }
