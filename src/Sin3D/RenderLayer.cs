@@ -38,8 +38,12 @@ public class RenderLayer
     /// <param name="graphicsDevice">The graphics device used to create the render target.</param>
     /// <param name="width">The width of the render target in pixels.</param>
     /// <param name="height">The height of the render target in pixels.</param>
-    public RenderLayer(string name, RenderLayerType layerType, int drawOrder,
-        GraphicsDevice graphicsDevice, int width, int height)
+    public RenderLayer(string name,
+        RenderLayerType layerType,
+        int drawOrder,
+        GraphicsDevice graphicsDevice,
+        int width,
+        int height)
     {
         Name = name;
         LayerType = layerType;
@@ -49,7 +53,6 @@ public class RenderLayer
             height,
             false,
             SurfaceFormat.Color,
-            //DepthFormat.Depth24Stencil8); // TODO: Find and fix the bug in the native DX12 backend!
-            DepthFormat.Depth24);
+            DepthFormat.Depth24Stencil8);
     }
 }
