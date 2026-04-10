@@ -49,7 +49,7 @@ public class RenderLayer
             height,
             false,
             SurfaceFormat.Color,
-            DepthFormat.Depth24Stencil8); // TODO: Find and fix the bug in the native DX12 backend!
-            //DepthFormat.Depth24);
+            //DepthFormat.Depth24Stencil8); // TODO: Find and fix the bug in the native DX12 backend!
+            DepthFormat.Depth24);
     }
 }
