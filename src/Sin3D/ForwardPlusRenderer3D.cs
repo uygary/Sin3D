@@ -23,6 +23,7 @@ public class ForwardPlusRenderer3D
     private readonly Texture2D[] _lightDataTextures;
     private readonly Vector4[] _lightDataBuffer;
     private int _activeEyeBuffer;
+    private int _lastWrittenEyeBuffer;
 
     private readonly Vector3[] _crrLightPositions;
     private readonly float[] _pointLightRadii;
@@ -187,9 +188,19 @@ public class ForwardPlusRenderer3D
             _graphicsDevice.Viewport.Width,
             _graphicsDevice.Viewport.Height);
 
-        // Write to the current eye's dedicated texture buffer
-        _lightGridTextures[_activeEyeBuffer].SetData(_tileIndexBuffer);
-        _lightDataTextures[_activeEyeBuffer].SetData(_lightDataBuffer);
+        // Write to the current eye's dedicated texture buffer, then advance
+        // to the next slot. This must happen here (not in PrepareEffect) because
+        // PrepareEffect may be called multiple times per eye pass (e.g. once for
+        // the Level geometry via LightingService, once for VR pointer beams).
+        // Advancing here guarantees exactly one advance per eye.
+        var bufferSlot = _activeEyeBuffer;
+        _activeEyeBuffer = (_activeEyeBuffer + 1) % _lightGridTextures.Length;
+
+        _lightGridTextures[bufferSlot].SetData(_tileIndexBuffer);
+        _lightDataTextures[bufferSlot].SetData(_lightDataBuffer);
+
+        // Remember which slot was just written so PrepareEffect can bind it.
+        _lastWrittenEyeBuffer = bufferSlot;
     }
 
     /// <summary>
@@ -384,14 +395,14 @@ public class ForwardPlusRenderer3D
             effect.Parameters["DirLight0Color"]?.SetValue(Vector3.Zero);
         }
 
-        // Forward+ Tile Mapping Parameters — bind this eye's dedicated textures
-        effect.Parameters["LightGridTexture"]?.SetValue(_lightGridTextures[_activeEyeBuffer]);
-        effect.Parameters["LightDataTexture"]?.SetValue(_lightDataTextures[_activeEyeBuffer]);
+        // Forward+ Tile Mapping Parameters — bind the buffer that PrepareLights last wrote to.
+        // This does NOT advance the buffer index; PrepareLights handles that (once per eye).
+        // PrepareEffect may be called multiple times per eye pass (LightingService + VrPointerService),
+        // and all calls must bind the same culling data.
+        effect.Parameters["LightGridTexture"]?.SetValue(_lightGridTextures[_lastWrittenEyeBuffer]);
+        effect.Parameters["LightDataTexture"]?.SetValue(_lightDataTextures[_lastWrittenEyeBuffer]);
         effect.Parameters["TileCounts"]?.SetValue(new Vector2(_tileCountX, _tileCountY));
         effect.Parameters["ScreenResolution"]?.SetValue(new Vector2(_graphicsDevice.Viewport.Width, _graphicsDevice.Viewport.Height));
-
-        // Advance to the next eye buffer slot (wraps 0→1→0 for stereo, stays 0 for mono)
-        _activeEyeBuffer = (_activeEyeBuffer + 1) % _lightGridTextures.Length;
     }
 
     /// <summary>

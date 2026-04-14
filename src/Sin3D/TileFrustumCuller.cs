@@ -48,10 +48,6 @@ public class TileFrustumCuller
         int screenWidth,
         int screenHeight)
     {
-        // TODO: This shite is still bugged on the left eye!
-        // After a whole day wasted, still can't figure out what the hell it is that I'm doing wrong.
-        // Figure it out and fix it!
-
         var totalTiles = _tileCountX * _tileCountY;
 
         // Pre-compute per-light screen-space AABBs
@@ -154,35 +150,64 @@ public class TileFrustumCuller
             return;
         }
 
-        // Project the exact center of the sphere to the screen (SIMD-accelerated)
-        var centerP = new Vector4(viewPos.X, viewPos.Y, viewPos.Z, 1f);
-        Vector4.Transform(in centerP, in projMatrix, out var centerClip);
-        
-        float invW = 1f / centerClip.W;
-        float cx = (centerClip.X * invW * 0.5f + 0.5f) * screenWidth;
-        float cy = (1f - (centerClip.Y * invW * 0.5f + 0.5f)) * screenHeight;
+        // 2. Extrude the 8 corners of the sphere's bounding box in View Space.
+        // This flawlessly absorbs any asymmetric or offset properties of VR projection matrices 
+        // without relying on derived geometric conic tangents which can suffer from projection space mapping differences.
+        var minX = viewPos.X - radius;
+        var maxX = viewPos.X + radius;
+        var minY = viewPos.Y - radius;
+        var maxY = viewPos.Y + radius;
+        var minZ = viewPos.Z - radius;
+        var maxZ = viewPos.Z + radius;
 
-        // Calculate maximum projected screen radii (using M11 and M22 focal lengths).
-        // This is exact for the sphere center but slightly underestimates for off-axis
-        // spheres because perspective causes them to project as ellipses larger than
-        // the focal-length ratio alone predicts.
-        float rx = (radius * Math.Abs(projMatrix.M11) * invW * 0.5f) * screenWidth;
-        float ry = (radius * Math.Abs(projMatrix.M22) * invW * 0.5f) * screenHeight;
+        Span<Vector4> corners = stackalloc Vector4[8]
+        {
+            new Vector4(minX, minY, minZ, 1f),
+            new Vector4(maxX, minY, minZ, 1f),
+            new Vector4(minX, maxY, minZ, 1f),
+            new Vector4(maxX, maxY, minZ, 1f),
+            new Vector4(minX, minY, maxZ, 1f),
+            new Vector4(maxX, minY, maxZ, 1f),
+            new Vector4(minX, maxY, maxZ, 1f),
+            new Vector4(maxX, maxY, maxZ, 1f)
+        };
 
-        // Small safety margin to cover:
-        //   - Off-axis elliptical distortion (~5% of projected radius)
-        //   - Float-to-int truncation at tile boundaries (+1 tile width in pixels)
+        float ndc_minX = float.MaxValue;
+        float ndc_maxX = float.MinValue;
+        float ndc_minY = float.MaxValue;
+        float ndc_maxY = float.MinValue;
+
+        // 3. Project all 8 points to NDC and find absolute bounding rectangle.
+        for (int i = 0; i < 8; i++)
+        {
+            Vector4.Transform(in corners[i], in projMatrix, out var clip);
+            float invW = 1f / clip.W;
+            float ndcX = clip.X * invW;
+            float ndcY = clip.Y * invW;
+
+            if (ndcX < ndc_minX) ndc_minX = ndcX;
+            if (ndcX > ndc_maxX) ndc_maxX = ndcX;
+            if (ndcY < ndc_minY) ndc_minY = ndcY;
+            if (ndcY > ndc_maxY) ndc_maxY = ndcY;
+        }
+
+        // 4. Convert NDC [-1, 1] mapped to Screen [0, width].
+        // Y is flipped (NDC Y is up, screen Y is down), so ndc_maxY dictates pxMinY.
+        float pxMinX = (ndc_minX * 0.5f + 0.5f) * screenWidth;
+        float pxMaxX = (ndc_maxX * 0.5f + 0.5f) * screenWidth;
+        float pxMinY = (1f - (ndc_maxY * 0.5f + 0.5f)) * screenHeight;
+        float pxMaxY = (1f - (ndc_minY * 0.5f + 0.5f)) * screenHeight;
+
+        // Add exactly 1 tile padding to cover partial overlaps and float truncation.
         float tileSizeX = (float)screenWidth / _tileCountX;
         float tileSizeY = (float)screenHeight / _tileCountY;
-        float inflationX = rx * 1.05f + tileSizeX;
-        float inflationY = ry * 1.05f + tileSizeY;
+        
+        pxMinX -= tileSizeX;
+        pxMaxX += tileSizeX;
+        pxMinY -= tileSizeY;
+        pxMaxY += tileSizeY;
 
-        float pxMinX = cx - inflationX;
-        float pxMaxX = cx + inflationX;
-        float pxMinY = cy - inflationY;
-        float pxMaxY = cy + inflationY;
-
-        // Convert to tile indices and clamp
+        // 6. Convert to tile indices and clamp
         minTileX = Math.Max(0, (int)(pxMinX / tileSizeX));
         minTileY = Math.Max(0, (int)(pxMinY / tileSizeY));
         maxTileX = Math.Min(_tileCountX - 1, (int)(pxMaxX / tileSizeX));
