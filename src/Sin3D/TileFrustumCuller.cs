@@ -32,7 +32,7 @@ public class TileFrustumCuller
     /// </summary>
     /// <param name="viewMatrix">The combined view matrix (CRR-adjusted).</param>
     /// <param name="projectionMatrix">The projection matrix.</param>
-    /// <param name="crrPositions">CRR light positions (already camera-relative).</param>
+    /// <param name="crrPositions">CRR light positions (pre-calculated to be camera-relative).</param>
     /// <param name="radii">Light radii in world units.</param>
     /// <param name="activeLightCount">Number of active lights this frame.</param>
     /// <param name="tileIndexBuffer">Output: flat [tileIndex * maxLightsPerTile + slot] buffer.</param>
@@ -48,6 +48,10 @@ public class TileFrustumCuller
         int screenWidth,
         int screenHeight)
     {
+        // TODO: This shite is still bugged on the left eye!
+        // After a whole day wasted, still can't figure out what the hell it is that I'm doing wrong.
+        // Figure it out and fix it!
+
         var totalTiles = _tileCountX * _tileCountY;
 
         // Pre-compute per-light screen-space AABBs
