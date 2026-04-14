@@ -121,8 +121,8 @@ public class TileFrustumCuller
 
     /// <summary>
     /// Projects a light's bounding sphere to find which screen tiles it overlaps.
-    /// Forms a View-Space AABB around the sphere (which is mathematically exact regardless of view rotation),
-    /// and projects its 8 corners to screen space via the projection matrix.
+    /// Uses cone-tangent projection to compute the projected silhouette of the sphere,
+    /// giving the tightest possible axis-aligned bounding rectangle in normalized device coordinates.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void ComputeLightTileBounds(
@@ -137,10 +137,10 @@ public class TileFrustumCuller
         out int maxTileX,
         out int maxTileY)
     {
-        // 1. Transform World position to View Space (SIMD-accelerated)
+        // 1. Transform World position to View Space (SIMD-accelerated).
         Vector3.Transform(in crrPosition, in viewMatrix, out var viewPos);
 
-        // If the sphere encompasses the camera, or extends past the near plane, fill the screen
+        // If the sphere encompasses the camera, or extends past the near plane, fill the screen.
         if (-viewPos.Z <= radius + 0.1f)
         {
             minTileX = 0;
@@ -150,67 +150,65 @@ public class TileFrustumCuller
             return;
         }
 
-        // 2. Extrude the 8 corners of the sphere's bounding box in View Space.
-        // This flawlessly absorbs any asymmetric or offset properties of VR projection matrices 
-        // without relying on derived geometric conic tangents which can suffer from projection space mapping differences.
-        var minX = viewPos.X - radius;
-        var maxX = viewPos.X + radius;
-        var minY = viewPos.Y - radius;
-        var maxY = viewPos.Y + radius;
-        var minZ = viewPos.Z - radius;
-        var maxZ = viewPos.Z + radius;
+        // 2. Compute exact view-space tangents on the Z = -1 plane.
+        var depth = -viewPos.Z;
+        var depthSquared = depth * depth;
+        var radiusSquared = radius * radius;
 
-        Span<Vector4> corners = stackalloc Vector4[8]
-        {
-            new Vector4(minX, minY, minZ, 1f),
-            new Vector4(maxX, minY, minZ, 1f),
-            new Vector4(minX, maxY, minZ, 1f),
-            new Vector4(maxX, maxY, minZ, 1f),
-            new Vector4(minX, minY, maxZ, 1f),
-            new Vector4(maxX, minY, maxZ, 1f),
-            new Vector4(minX, maxY, maxZ, 1f),
-            new Vector4(maxX, maxY, maxZ, 1f)
-        };
+        // Denominator is guaranteed to be > 0 because of the depth > radius check above.
+        var denominator = depthSquared - radiusSquared;
 
-        float ndc_minX = float.MaxValue;
-        float ndc_maxX = float.MinValue;
-        float ndc_minY = float.MaxValue;
-        float ndc_maxY = float.MinValue;
+        var xSquared = viewPos.X * viewPos.X;
+        var dx = radius * MathF.Sqrt(xSquared + denominator);
+        var minTangentX = (viewPos.X * depth - dx) / denominator;
+        var maxTangentX = (viewPos.X * depth + dx) / denominator;
 
-        // 3. Project all 8 points to NDC and find absolute bounding rectangle.
-        for (int i = 0; i < 8; i++)
-        {
-            Vector4.Transform(in corners[i], in projMatrix, out var clip);
-            float invW = 1f / clip.W;
-            float ndcX = clip.X * invW;
-            float ndcY = clip.Y * invW;
+        var ySquared = viewPos.Y * viewPos.Y;
+        var dy = radius * MathF.Sqrt(ySquared + denominator);
+        var minTangentY = (viewPos.Y * depth - dy) / denominator;
+        var maxTangentY = (viewPos.Y * depth + dy) / denominator;
 
-            if (ndcX < ndc_minX) ndc_minX = ndcX;
-            if (ndcX > ndc_maxX) ndc_maxX = ndcX;
-            if (ndcY < ndc_minY) ndc_minY = ndcY;
-            if (ndcY > ndc_maxY) ndc_maxY = ndcY;
-        }
+        // 3. Project the minimum and maximum tangent bounds to clip space.
+        var p1 = new Vector4(minTangentX, minTangentY, -1f, 1f);
+        var p2 = new Vector4(maxTangentX, maxTangentY, -1f, 1f);
 
-        // 4. Convert NDC [-1, 1] mapped to Screen [0, width].
-        // Y is flipped (NDC Y is up, screen Y is down), so ndc_maxY dictates pxMinY.
-        float pxMinX = (ndc_minX * 0.5f + 0.5f) * screenWidth;
-        float pxMaxX = (ndc_maxX * 0.5f + 0.5f) * screenWidth;
-        float pxMinY = (1f - (ndc_maxY * 0.5f + 0.5f)) * screenHeight;
-        float pxMaxY = (1f - (ndc_minY * 0.5f + 0.5f)) * screenHeight;
+        Vector4.Transform(in p1, in projMatrix, out var clip1);
+        Vector4.Transform(in p2, in projMatrix, out var clip2);
+
+        // 4. Convert to NDC
+        var inverseOfPerspectiveDepth1 = 1f / clip1.W;
+        var inverseOfPerspectiveDepth2 = 1f / clip2.W;
+
+        var ndcX1 = clip1.X * inverseOfPerspectiveDepth1;
+        var ndcX2 = clip2.X * inverseOfPerspectiveDepth2;
+        var ndcY1 = clip1.Y * inverseOfPerspectiveDepth1;
+        var ndcY2 = clip2.Y * inverseOfPerspectiveDepth2;
+
+        var ndcMinX = Math.Min(ndcX1, ndcX2);
+        var ndcMaxX = Math.Max(ndcX1, ndcX2);
+        var ndcMinY = Math.Min(ndcY1, ndcY2);
+        var ndcMaxY = Math.Max(ndcY1, ndcY2);
+
+        // 5. Convert NDC [-1, 1] mapped to Screen [0, width].
+        // Y is flipped (NDC Y is up, screen Y is down), so ndcMaxY dictates pxMinY.
+        var pixelMinXBount = (ndcMinX * 0.5f + 0.5f) * screenWidth;
+        var pixelMaxXBound = (ndcMaxX * 0.5f + 0.5f) * screenWidth;
+        var pixelMinYBound = (1f - (ndcMaxY * 0.5f + 0.5f)) * screenHeight;
+        var pixelMaxYBound = (1f - (ndcMinY * 0.5f + 0.5f)) * screenHeight;
 
         // Add exactly 1 tile padding to cover partial overlaps and float truncation.
-        float tileSizeX = (float)screenWidth / _tileCountX;
-        float tileSizeY = (float)screenHeight / _tileCountY;
+        var tileWidth = (float)screenWidth / _tileCountX;
+        var tileHeight = (float)screenHeight / _tileCountY;
         
-        pxMinX -= tileSizeX;
-        pxMaxX += tileSizeX;
-        pxMinY -= tileSizeY;
-        pxMaxY += tileSizeY;
+        pixelMinXBount -= tileWidth;
+        pixelMaxXBound += tileWidth;
+        pixelMinYBound -= tileHeight;
+        pixelMaxYBound += tileHeight;
 
         // 6. Convert to tile indices and clamp
-        minTileX = Math.Max(0, (int)(pxMinX / tileSizeX));
-        minTileY = Math.Max(0, (int)(pxMinY / tileSizeY));
-        maxTileX = Math.Min(_tileCountX - 1, (int)(pxMaxX / tileSizeX));
-        maxTileY = Math.Min(_tileCountY - 1, (int)(pxMaxY / tileSizeY));
+        minTileX = Math.Max(0, (int)(pixelMinXBount / tileWidth));
+        minTileY = Math.Max(0, (int)(pixelMinYBound / tileHeight));
+        maxTileX = Math.Min(_tileCountX - 1, (int)(pixelMaxXBound / tileWidth));
+        maxTileY = Math.Min(_tileCountY - 1, (int)(pixelMaxYBound / tileHeight));
     }
 }
