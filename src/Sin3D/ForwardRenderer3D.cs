@@ -7,7 +7,7 @@ namespace Sin3D;
 /// <summary>
 /// A 3D renderer class used for drawing <see cref="Model3D"/> objects and handling ambient lighting, directional lighting and fog.
 /// </summary>
-public class Renderer3D
+public class ForwardRenderer3D
 {
     private readonly GraphicsDevice _graphicsDevice;
     private readonly bool _useCrr;
@@ -84,12 +84,12 @@ public class Renderer3D
     public float FogEnd { get => _fogEnd; set => _fogEnd = value; }
 
     /// <summary>
-    /// Creates a new <see cref="Renderer3D"/> object.
+    /// Creates a new <see cref="ForwardRenderer3D"/> object.
     /// </summary>
     /// <param name="graphicsDevice">The graphics device that the renderer will target.</param>
     /// <param name="useCrr">Whether to use the camera-relative rendering projection matrix.</param>
-    /// <param name="cull">Whether to cull meshes out of the Camera3d frustum bounds.</param>
-    public Renderer3D(GraphicsDevice graphicsDevice, bool useCrr, bool cull)
+    /// <param name="cull">Whether to cull meshes out of the <see cref="Camera3D"/> frustum bounds.</param>
+    public ForwardRenderer3D(GraphicsDevice graphicsDevice, bool useCrr, bool cull)
     {
         _graphicsDevice = graphicsDevice;
         _useCrr = useCrr;
@@ -166,8 +166,8 @@ public class Renderer3D
                 var worldScaleAndPos = model.WorldMatrix;
                 localSphere.Transform(ref worldScaleAndPos, out var worldSphere);
                 
-                camera.Frustum.Contains(ref worldSphere, out ContainmentType containment);
-                if (containment == ContainmentType.Disjoint)
+                camera.Frustum.Contains(ref worldSphere, out var containmentType);
+                if (containmentType == ContainmentType.Disjoint)
                 {
                     continue;
                 }
@@ -383,6 +383,7 @@ public class Renderer3D
                 {
                     var pass = effect.CurrentTechnique.Passes[pi];
                     pass.Apply();
+
                     _graphicsDevice.DrawIndexedPrimitives(
                         PrimitiveType.TriangleList,
                         part.VertexOffset,
